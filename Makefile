@@ -9,8 +9,7 @@
 # Valid usage: ``make upload ROBOT=foobar``
 REMOTE = ${ROBOT}
 
-# XXX: Project name, needs to match the one in WORKSPACE
-PROJECT_NAME = upkie_template
+PROJECT_NAME = pink_balancer
 
 BAZEL = $(CURDIR)/tools/bazelisk
 CURDATE = $(shell date --iso=seconds)
@@ -72,5 +71,5 @@ run_mock_spine:  ### run the mock spine on the Raspberry Pi
 run_pi3hat_spine:  ### run the pi3hat spine on the Raspberry Pi
 	$(RASPUNZEL) run -s @upkie//spines:pi3hat_spine
 
-run_agent:  ### sandbox agent
+run_pink_balancer:  ### run the agent
 	$(RASPUNZEL) run -v -s //pink_balancer:pink_balancer -- --config pi3hat

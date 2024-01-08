@@ -3,7 +3,7 @@
 # Copyright 2022 Stéphane Caron
 # Copyright 2023 Inria
 
-workspace(name = "upkie_template")  # XXX: rename
+workspace(name = "pink_balancer")
 
 # Repositories
 # ============
