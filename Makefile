@@ -49,6 +49,8 @@ clean_broken_links:
 .PHONY: build
 build: clean_broken_links  ## build Raspberry Pi targets
 	$(BAZEL) build --config=pi64 //pink_balancer
+	$(BAZEL) build --config=pi64 @upkie//spines:mock_spine
+	$(BAZEL) build --config=pi64 @upkie//spines:pi3hat_spine
 
 .PHONY: clean
 clean:  ## clean all local build and intermediate files
@@ -71,4 +73,4 @@ run_pi3hat_spine:  ### run the pi3hat spine on the Raspberry Pi
 	$(RASPUNZEL) run -s @upkie//spines:pi3hat_spine
 
 run_agent:  ### sandbox agent
-	$(RASPUNZEL) run -v -s //agent -- --config pi3hat --configure-cpu
+	$(RASPUNZEL) run -v -s //pink_balancer:pink_balancer -- --config pi3hat
