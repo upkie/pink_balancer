@@ -48,9 +48,7 @@ clean_broken_links:
 
 .PHONY: build
 build: clean_broken_links  ## build Raspberry Pi targets
-	$(BAZEL) build --config=pi64 //agent
-	$(BAZEL) build --config=pi64 //spines:mock_spine
-	$(BAZEL) build --config=pi64 //spines:pi3hat_spine
+	$(BAZEL) build --config=pi64 //pink_balancer
 
 .PHONY: clean
 clean:  ## clean all local build and intermediate files
@@ -62,9 +60,6 @@ upload: check-robot build  ## upload built targets to the Raspberry Pi
 	ssh $(REMOTE) mkdir -p $(PROJECT_NAME)
 	ssh $(REMOTE) sudo find $(PROJECT_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
 	rsync -Lrtu --delete-after --delete-excluded --exclude bazel-out/ --exclude bazel-testlogs/ --exclude bazel-$(CURDIR_NAME) --exclude bazel-$(PROJECT_NAME)/ --progress $(CURDIR)/ $(REMOTE):$(PROJECT_NAME)/
-
-bullet_spine:  ## start a Bullet simulation spine
-	$(BAZEL) run //spines:bullet_spine -- --show
 
 # REMOTE TARGETS
 # ==============
