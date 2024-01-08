@@ -16,9 +16,8 @@ from pink import solve_ik
 from pink.tasks import FrameTask, PostureTask
 from pink.utils import custom_configuration_vector
 from pink.visualization import start_meshcat_visualizer
-from wheel_balancer import WheelBalancer
-
 from upkie.utils.clamp import clamp
+from wheel_balancer import WheelBalancer
 
 # Runtime version check for Pink for now
 # See https://github.com/stephane-caron/bazel_pinocchio/issues/1 for context
@@ -58,13 +57,16 @@ def serialize_to_servo_action(configuration, velocity, servo_layout) -> dict:
     @return Dictionary of position and velocity targets for each joint.
     """
     target = {}
-    for joint, servo in servo_layout.items():
-        if "configuration_index" not in servo:
-            continue
-        i_q = servo["configuration_index"]
-        i_v = i_q - 1
-        target[joint] = {"position": configuration.q[i_q]}
-        target[joint]["velocity"] = velocity[i_v]
+    model = configuration.model
+    tau_max = model.effortLimit
+    for joint_name, servo in servo_layout.items():
+        joint_id = model.getJointId(joint_name)
+        joint = model.joints[joint_id]
+        target[joint_name] = {
+            "position": configuration.q[joint.idx_q],
+            "velocity": velocity[joint.idx_v],
+            "maximum_torque": tau_max[joint.idx_v],
+        }
     return target
 
 
@@ -313,14 +315,10 @@ class WholeBodyController:
                 transform_right_to_world.np
             )
 
-        servo_action["left_wheel"] = {
-            "position": np.nan,
-            "velocity": left_wheel_velocity,
-        }
-        servo_action["right_wheel"] = {
-            "position": np.nan,
-            "velocity": right_wheel_velocity,
-        }
+        servo_action["left_wheel"]["position"] = np.nan
+        servo_action["left_wheel"]["velocity"] = left_wheel_velocity
+        servo_action["right_wheel"]["position"] = np.nan
+        servo_action["right_wheel"]["velocity"] = right_wheel_velocity
 
         turning_prob = self.wheel_balancer.turning_probability
         # using the same numbers for both gain scales for now
