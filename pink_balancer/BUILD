@@ -45,8 +45,6 @@ py_binary(
         # dependencies on the host side for now.
         # Followed in: https://github.com/upkie/upkie/issues/1
         "//:pi64_config": [],
-        "//conditions:default": [
-            requirement("numpy"),
-        ],
+        "//conditions:default": [],
     }),
 )
