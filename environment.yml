@@ -1,0 +1,10 @@
+name: pink_balancer
+channels:
+    - conda-forge
+dependencies:
+    - pinocchio >= 2.6.21
+    - pip
+    - qpsolvers >= 4.2.0
+    - pip:
+        - pin-pink
+        - posix-ipc
