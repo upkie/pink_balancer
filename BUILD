@@ -20,3 +20,12 @@ config_setting(
         "cpu": "aarch64",
     }
 )
+
+filegroup(
+    name = "all",
+    srcs = [
+        "@upkie//spines:bullet_spine",
+        "//pink_balancer:pink_balancer"
+    ],
+    visibility = ["//visibility:public"]
+)

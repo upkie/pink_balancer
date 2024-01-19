@@ -216,6 +216,8 @@ class WholeBodyController:
         """
         try:
             axis_value: float = observation["joystick"]["pad_axis"][1]
+            print(f"Keys: {observation['joystick'].keys()}")
+            print(f"pad_axis[1] = {axis_value}")
             velocity = self.max_crouch_velocity * axis_value
         except KeyError:
             velocity = 0.0
@@ -278,7 +280,6 @@ class WholeBodyController:
         """
         if not self.__initialized:
             self._process_first_observation(observation)
-
         self.update_ik_targets(observation, dt)
         robot_velocity = solve_ik(
             self.configuration, self.tasks.values(), dt, solver="quadprog"
