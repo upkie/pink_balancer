@@ -11,7 +11,7 @@ BalancingGains.pitch_stiffness = 20.0
 BalancingGains.position_damping = 5.0
 BalancingGains.position_stiffness = 2.0
 
-JumpPlayback.duration = 0.01                      # [s]
+JumpPlayback.duration = 0.05                      # [s]
 
 WheelBalancer.max_ground_velocity = 2.0           # [m] / [s]
 
