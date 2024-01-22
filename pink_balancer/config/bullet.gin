@@ -1,14 +1,17 @@
 # -*- python -*-
 #
-# Copyright 2022 Stéphane Caron
 # SPDX-License-Identifier: Apache-2.0
+# Copyright 2022 Stéphane Caron
+# Copyright 2024 Inria
 
-import wheel_balancer
+import whole_body_controller
 
-Gains.pitch_damping = 10.0
-Gains.pitch_stiffness = 20.0
-Gains.position_damping = 5.0
-Gains.position_stiffness = 2.0
+BalancingGains.pitch_damping = 10.0
+BalancingGains.pitch_stiffness = 20.0
+BalancingGains.position_damping = 5.0
+BalancingGains.position_stiffness = 2.0
+
+JumpPlayback.duration = 0.01                      # [s]
 
 WheelBalancer.max_ground_velocity = 2.0           # [m] / [s]
 

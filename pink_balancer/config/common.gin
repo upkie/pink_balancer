@@ -1,10 +1,16 @@
 # -*- python -*-
 #
-# Copyright 2022 Stéphane Caron
 # SPDX-License-Identifier: Apache-2.0
+# Copyright 2022 Stéphane Caron
+# Copyright 2024 Inria
 
-import wheel_balancer
 import whole_body_controller
+
+JumpPlayback.cooldown = 1.0                       # [s]
+
+HeightController.max_crouch_height = 0.08         # [m]
+HeightController.max_crouch_velocity = 0.05       # [m] / [s]
+HeightController.visualize = False
 
 WheelBalancer.air_return_period = 1.0             # [s]
 WheelBalancer.fall_pitch = 1.0                    # [rad]
@@ -20,7 +26,4 @@ WheelBalancer.turning_decision_time = 0.2         # [s]
 WheelBalancer.wheel_radius = 0.06                 # [m]
 
 WholeBodyController.gain_scale = 2.0
-WholeBodyController.max_crouch_height = 0.08      # [m]
-WholeBodyController.max_crouch_velocity = 0.05    # [m] / [s]
 WholeBodyController.turning_gain_scale = 2.0
-WholeBodyController.visualize = False

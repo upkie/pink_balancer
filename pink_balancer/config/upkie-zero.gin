@@ -1,9 +1,10 @@
 # -*- python -*-
 #
-# Copyright 2022 Stéphane Caron
 # SPDX-License-Identifier: Apache-2.0
+# Copyright 2022 Stéphane Caron
+# Copyright 2024 Inria
 
-import wheel_balancer
+import whole_body_controller
 
 # 4WD wheels with radius=6 cm, carpet
 # -----------------------------------
@@ -17,7 +18,9 @@ import wheel_balancer
 # oscillations of increasing magnitude. Going for 1.6 now because 2.5 feels a
 # bit more overshooty.
 #
-Gains.pitch_damping = 2.0
-Gains.pitch_stiffness = 15.0
-Gains.position_damping = 0.8
-Gains.position_stiffness = 1.6
+BalancingGains.pitch_damping = 2.0
+BalancingGains.pitch_stiffness = 15.0
+BalancingGains.position_damping = 0.8
+BalancingGains.position_stiffness = 1.6
+
+JumpPlayback.duration = 0.50                      # [s]
