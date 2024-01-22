@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if on_raspi():
         configure_agent_process()
 
-    spine = SpineInterface()
+    spine = SpineInterface(retries=10)
     controller = WholeBodyController(visualize=args.visualize)
     spine_config = upkie.config.SPINE_CONFIG.copy()
     wheel_radius = controller.wheel_balancer.wheel_radius
