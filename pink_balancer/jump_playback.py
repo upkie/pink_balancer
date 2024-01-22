@@ -35,5 +35,4 @@ class JumpPlayback:
     def cycle(self, dt: float) -> float:
         self.t += dt
         height = self.initial_height * max(0.0, 1.0 - self.t / self.duration)
-        print(f"jump playback now at {self.t=}, {height=}")
         return height

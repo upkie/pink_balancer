@@ -178,6 +178,7 @@ class HeightController:
         self.__initialized = False
         self.configuration = configuration
         self.jump_playback = None
+        self.last_velocity = np.zeros(robot.nv)
         self.max_crouch_height = max_crouch_height
         self.max_crouch_velocity = max_crouch_velocity
         self.robot = robot
@@ -330,6 +331,8 @@ class HeightController:
         """
         return {
             "configuration": self.configuration.q,
+            "target_height": self.target_position_wheel_in_rest[2],
+            "velocity": self.last_velocity,
         }
 
     def cycle(self, observation: dict, dt: float) -> dict:
@@ -348,17 +351,18 @@ class HeightController:
 
         self.update_target_height(observation, dt)
         self.update_ik_targets(observation, dt)
-        robot_velocity = solve_ik(
+        velocity = solve_ik(
             self.configuration,
             self.tasks.values(),
             dt,
             solver="proxqp",
         )
-        self.configuration.integrate_inplace(robot_velocity, dt)
+        self.configuration.integrate_inplace(velocity, dt)
+        self.last_velocity = velocity
 
         self._observe_ground_positions(observation)
         servo_action = serialize_to_servo_action(
-            self.configuration, robot_velocity, self.servo_layout
+            self.configuration, velocity, self.servo_layout
         )
         action = {"servo": servo_action}
         return action
