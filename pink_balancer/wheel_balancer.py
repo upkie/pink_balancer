@@ -11,8 +11,8 @@ from typing import Tuple
 
 import gin
 import numpy as np
+from balancing_gains import BalancingGains
 from numpy.typing import NDArray
-
 from upkie.observers.base_pitch import compute_base_pitch_from_imu
 from upkie.utils.clamp import clamp, clamp_abs
 from upkie.utils.exceptions import FallDetected
@@ -32,7 +32,7 @@ class WheelBalancer:
         air_return_period: Cutoff period for resetting integrators while the
             robot is in the air, in [s].
         error: Two-dimensional vector of ground position and base pitch errors.
-        gains: velocity controller gains.
+        gains: Velocity controller gains.
         ground_velocity: Sagittal velocity in [m] / [s].
         integral_error_velocity: Integral term contributing to the sagittal
             velocity, in [m] / [s].
@@ -60,69 +60,9 @@ class WheelBalancer:
         wheel_radius: Wheel radius in [m].
     """
 
-    @gin.configurable
-    class Gains:
-        pitch_damping: float
-        pitch_stiffness: float
-        position_damping: float
-        position_stiffness: float
-
-        def __init__(
-            self,
-            pitch_damping: float,
-            pitch_stiffness: float,
-            position_damping: float,
-            position_stiffness: float,
-        ):
-            self.pitch_damping = pitch_damping
-            self.pitch_stiffness = pitch_stiffness
-            self.position_damping = position_damping
-            self.position_stiffness = position_stiffness
-
-        def set(
-            self,
-            pitch_damping: float,
-            pitch_stiffness: float,
-            position_damping: float,
-            position_stiffness: float,
-        ) -> None:
-            """!
-            Set gains in one function call.
-
-            @param pitch_damping: Pitch error (normalized) damping gain.
-                Corresponds to the proportional term of the velocity PI
-                controller, equivalent to the derivative term of the
-                acceleration PD controller.
-            @param pitch_stiffness: Pitch error (normalized) stiffness gain.
-                Corresponds to the integral term of the velocity PI controller,
-                equivalent to the proportional term of the acceleration PD
-                controller.
-            @param position_damping: Position error (normalized) damping gain.
-                Corresponds to the proportional term of the velocity PI
-                controller, equivalent to the derivative term of the
-                acceleration PD controller.
-            @param position_stiffness: Position error (normalized) stiffness
-                gain. Corresponds to the integral term of the velocity PI
-                controller, equivalent to the proportional term of the
-                acceleration PD controller.
-            """
-            self.pitch_damping = pitch_damping
-            self.pitch_stiffness = pitch_stiffness
-            self.position_damping = position_damping
-            self.position_stiffness = position_stiffness
-
-        def __repr__(self):
-            return (
-                "WheelBalancer.Gains("
-                f"pitch_damping={self.pitch_damping}, "
-                f"pitch_stiffness={self.pitch_stiffness}, "
-                f"position_damping={self.position_damping}, "
-                f"position_stiffness={self.position_stiffness}, "
-            )
-
     air_return_period: float
     error: NDArray[float]
-    gains: Gains
+    gains: BalancingGains
     ground_velocity: float
     integral_error_velocity: float
     max_ground_velocity: float
@@ -184,7 +124,7 @@ class WheelBalancer:
         self.air_return_period = air_return_period
         self.error = np.zeros(2)
         self.fall_pitch = fall_pitch
-        self.gains = WheelBalancer.Gains()  # type: ignore
+        self.gains = BalancingGains()
         self.ground_velocity = 0.0
         self.integral_error_velocity = 0.0
         self.max_ground_velocity = max_ground_velocity
