@@ -6,5 +6,7 @@ dependencies:
     - pip
     - qpsolvers >= 4.2.0
     - pip:
+        - gin-config
         - pin-pink
         - posix-ipc
+        - upkie
