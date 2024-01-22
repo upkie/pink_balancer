@@ -95,30 +95,31 @@ class WheelBalancer:
         turning_decision_time: float,
         wheel_radius: float,
     ):
-        """!
+        """
         Initialize balancer.
 
-        @param air_return_period Cutoff period for resetting integrators while
-            the robot is in the air, in [s].
-        @param max_ground_velocity Maximum commanded ground velocity no matter
-            what, in [m] / [s].
-        @param max_integral_error_velocity Maximum integral error velocity, in
-            [m] / [s].
-        @param max_target_accel Maximum acceleration for the ground target, in
-            [m] / [s]². This bound does not affect the commanded ground
-            velocity.
-        @param max_target_distance Maximum distance from the current ground
-            position to the target, in [m].
-        @param max_target_velocity Maximum velocity for the ground target, in
-            [m] / [s]. This bound indirectly affects the commanded ground
-            velocity.
-        @param max_yaw_accel Maximum yaw angular acceleration in [rad] / [s]².
-        @param max_yaw_velocity Maximum yaw angular velocity in [rad] / [s].
-        @param turning_deadband Joystick axis value between 0.0 and 1.0 below
-            which legs stiffen but the turning motion doesn't start.
-        @param turning_decision_time Minimum duration in [s] for the turning
-            probability to switch from zero to one and converesly.
-        @param wheel_radius Wheel radius in [m].
+        Args:
+            air_return_period: Cutoff period for resetting integrators while
+                the robot is in the air, in [s].
+            max_ground_velocity: Maximum commanded ground velocity no matter
+                what, in [m] / [s].
+            max_integral_error_velocity: Maximum integral error velocity, in
+                [m] / [s].
+            max_target_accel: Maximum acceleration for the ground target, in
+                [m] / [s]². This bound does not affect the commanded ground
+                velocity.
+            max_target_distance: Maximum distance from the current ground
+                position to the target, in [m].
+            max_target_velocity: Maximum velocity for the ground target, in
+                [m] / [s]. This bound indirectly affects the commanded ground
+                velocity.
+            max_yaw_accel: Maximum yaw angular acceleration in [rad] / [s]².
+            max_yaw_velocity: Maximum yaw angular velocity in [rad] / [s].
+            turning_deadband: Joystick axis value between 0.0 and 1.0 below
+                which legs stiffen but the turning motion doesn't start.
+            turning_decision_time: Minimum duration in [s] for the turning
+                probability to switch from zero to one and converesly.
+            wheel_radius Wheel: radius in [m].
         """
         assert 0.0 <= turning_deadband <= 1.0
         self.air_return_period = air_return_period
@@ -147,17 +148,19 @@ class WheelBalancer:
     def update_target_ground_velocity(
         self, observation: dict, dt: float
     ) -> None:
-        """!
+        """
         Update target ground velocity from joystick input.
 
-        @param observation Latest observation.
-        @param dt Time in [s] until next cycle.
+        Args:
+            observation: Latest observation.
+            dt: Time in [s] until next cycle.
 
-        @note The target ground velocity is commanded by both the left axis and
-        right trigger of the joystick. When the right trigger is unpressed, the
-        commanded velocity is set from the left axis, interpolating from 0 to
-        50% of its maximum configured value. Pressing the right trigger
-        increases it further up to 100% of the configured value.
+        Note:
+            The target ground velocity is commanded by both the left axis and
+            right trigger of the joystick. When the right trigger is unpressed,
+            the commanded velocity is set from the left axis, interpolating
+            from 0 to 50% of its maximum configured value. Pressing the right
+            trigger increases it further up to 100% of the configured value.
         """
         try:
             axis_value = observation["joystick"]["left_axis"][1]
@@ -176,11 +179,12 @@ class WheelBalancer:
         )
 
     def update_target_yaw_velocity(self, observation: dict, dt: float) -> None:
-        """!
+        """
         Update target yaw velocity from joystick input.
 
-        @param observation Latest observation.
-        @param dt Time in [s] until next cycle.
+        Args:
+            observation: Latest observation.
+            dt: Time in [s] until next cycle.
         """
         try:
             joystick_value = observation["joystick"]["right_axis"][0]
@@ -231,11 +235,12 @@ class WheelBalancer:
             pass
 
     def cycle(self, observation: dict, dt: float) -> None:
-        """!
+        """
         Compute a new ground velocity.
 
-        @param observation Latest observation.
-        @param dt Time in [s] until next cycle.
+        Args:
+            observation: Latest observation.
+            dt: Time in [s] until next cycle.
         """
         self.process_joystick_buttons(observation)
         self.update_target_ground_velocity(observation, dt)
@@ -332,23 +337,40 @@ class WheelBalancer:
             self.ground_velocity, self.max_ground_velocity
         )
 
+        delta = observation["height_controller"]["position_right_in_left"]
+        left_velocity, right_velocity = self.get_wheel_velocities(delta)
+        servo_action = {
+            "left_wheel": {
+                "position": np.nan,
+                "velocity": left_velocity,
+            },
+            "right_wheel": {
+                "position": np.nan,
+                "velocity": right_velocity,
+            },
+        }
+        return {"servo": servo_action}
+
     def get_wheel_velocities(
         self,
         position_right_in_left: NDArray[float],
     ) -> Tuple[float, float]:
-        """!
+        """
         Get left and right wheel velocities.
 
-        @param position_right_in_left: Translation from the left contact frame
-            to the right contact frame, expressed in the left contact frame.
-            Equivalently, linear coordinates of the pose of the right contact
-            frame with respect to the left contact frame.
+        Args:
+            position_right_in_left: Translation from the left contact frame
+                to the right contact frame, expressed in the left contact
+                frame. Equivalently, linear coordinates of the pose of the
+                right contact frame with respect to the left contact frame.
 
-        @return Tuple with `left_wheel_velocity` (left wheel velocity in rad/s)
-            and `right_wheel_velocity` (right wheel velocity in rad/s).
+        Returns:
+            Tuple with `left_wheel_velocity` (left wheel velocity in rad/s) and
+            `right_wheel_velocity` (right wheel velocity in rad/s).
 
-        @note For now we assume that the two wheels are parallel to the ground,
-        so that the rotation from one frame to the other is the identity.
+        Note:
+            For now we assume that the two wheels are parallel to the ground,
+            so that the rotation from one frame to the other is the identity.
         """
         # Sagittal translation
         left_wheel_velocity: float = +self.ground_velocity / self.wheel_radius

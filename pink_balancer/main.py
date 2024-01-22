@@ -11,20 +11,20 @@ import traceback
 from os import path
 
 import gin
+import upkie.config
 from loop_rate_limiters import RateLimiter
+from upkie.utils.raspi import configure_agent_process, on_raspi
+from upkie.utils.spdlog import logging
 from vulp.spine import SpineInterface
 from whole_body_controller import WholeBodyController
 
-import upkie.config
-from upkie.utils.raspi import configure_agent_process, on_raspi
-from upkie.utils.spdlog import logging
-
 
 def parse_command_line_arguments() -> argparse.Namespace:
-    """!
+    """
     Parse command line arguments.
 
-    @return Command-line arguments.
+    Returns:
+        Command-line arguments.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -51,13 +51,14 @@ def run(
     controller: WholeBodyController,
     frequency: float = 200.0,
 ) -> None:
-    """!
+    """
     Read observations and send actions to the spine.
 
-    @param spine Interface to the spine.
-    @param spine_config Spine configuration dictionary.
-    @param controller Whole-body controller.
-    @param frequency Control frequency in Hz.
+    Args:
+        spine: Interface to the spine.
+        spine_config: Spine configuration dictionary.
+        controller: Whole-body controller.
+        frequency: Control frequency in Hz.
     """
     dt = 1.0 / frequency
     rate = RateLimiter(frequency, "controller")
