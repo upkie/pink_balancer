@@ -8,5 +8,4 @@ dependencies:
     - pip:
         - gin-config
         - pin-pink
-        - posix-ipc
         - upkie
