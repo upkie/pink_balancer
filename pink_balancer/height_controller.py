@@ -82,7 +82,6 @@ def add_target_frames(visualizer):
 
 @gin.configurable
 class HeightController:
-
     """
     Compute leg inverse kinematics.
 
