@@ -9,9 +9,6 @@
 # UPKIE_NAME=foo``
 REMOTE = ${UPKIE_NAME}
 
-# Project name, needs to match the one in WORKSPACE
-PROJECT_NAME = pink_balancer
-
 BAZEL = $(CURDIR)/tools/bazelisk
 CURDATE = $(shell date --iso=seconds)
 CURDIR_NAME = $(shell basename $(CURDIR))
@@ -45,7 +42,7 @@ clean_broken_links:
 
 .PHONY: build
 build: clean_broken_links  ## build Raspberry Pi targets
-	$(BAZEL) build --config=pi64 //$(PROJECT_NAME)
+	$(BAZEL) build --config=pi64 //pink_balancer
 
 .PHONY: clean
 clean:  ## clean all local build and intermediate files
@@ -54,9 +51,9 @@ clean:  ## clean all local build and intermediate files
 .PHONY: upload
 upload: check_upkie_name build  ## upload built targets to the Raspberry Pi
 	ssh $(REMOTE) sudo date -s "$(CURDATE)"
-	ssh $(REMOTE) mkdir -p $(PROJECT_NAME)
-	ssh $(REMOTE) sudo find $(PROJECT_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
-	rsync -Lrtu --delete-after --delete-excluded --exclude bazel-out/ --exclude bazel-testlogs/ --exclude bazel-$(CURDIR_NAME) --exclude bazel-$(PROJECT_NAME)/ --exclude logs/ --progress $(CURDIR)/ $(REMOTE):$(PROJECT_NAME)/
+	ssh $(REMOTE) mkdir -p $(CURDIR_NAME)
+	ssh $(REMOTE) sudo find $(CURDIR_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
+	rsync -Lrtu --delete-after --delete-excluded --exclude bazel-out/ --exclude bazel-testlogs/ --exclude bazel-$(CURDIR_NAME)/ --exclude logs/ --progress $(CURDIR)/ $(REMOTE):$(CURDIR_NAME)/
 
-run_agent:  ### run agent
-	$(RASPUNZEL) run -v -s //$(PROJECT_NAME)
+run_agent:  ### run agent with Bazel on the Raspberry Pi
+	$(RASPUNZEL) run -v -s //pink_balancer
