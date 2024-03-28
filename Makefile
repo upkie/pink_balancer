@@ -55,5 +55,8 @@ upload: check_upkie_name build  ## upload built targets to the Raspberry Pi
 	ssh $(REMOTE) sudo find $(CURDIR_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
 	rsync -Lrtu --delete-after --delete-excluded --exclude bazel-out/ --exclude bazel-testlogs/ --exclude bazel-$(CURDIR_NAME)/ --exclude logs/ --progress $(CURDIR)/ $(REMOTE):$(CURDIR_NAME)/
 
+run_bullet:  ## run the agent with simulation configuration
+	python pink_balancer/main.py -c bullet
+
 run_agent:  ### run agent with Bazel on the Raspberry Pi
 	$(RASPUNZEL) run -v -s //pink_balancer
