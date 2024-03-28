@@ -10,5 +10,3 @@ BalancingGains.pitch_damping = 1.8
 BalancingGains.pitch_stiffness = 20.0
 BalancingGains.position_damping = 0.7
 BalancingGains.position_stiffness = 1.6
-
-JumpPlayback.duration = 0.50  # [s]

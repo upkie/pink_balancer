@@ -5,14 +5,11 @@
 # Copyright 2022 Stéphane Caron
 # Copyright 2023-2024 Inria
 
-from typing import Optional
-
 import gin
 import numpy as np
 import pink
 import pinocchio as pin
 import upkie_description
-from jump_playback import JumpPlayback
 from numpy.typing import NDArray
 from pink import solve_ik
 from pink.tasks import FrameTask, PostureTask
@@ -216,23 +213,6 @@ class HeightController:
         height += velocity * dt
         return height
 
-    def get_next_height_from_playback(
-        self, observation: dict, dt: float
-    ) -> Optional[float]:
-        try:
-            square_pressed = observation["joystick"]["square_button"]
-            if self.jump_playback is None and square_pressed:
-                initial_height = self.target_position_wheel_in_rest[2]
-                self.jump_playback = JumpPlayback(initial_height)
-        except KeyError:
-            pass
-        height = None
-        if self.jump_playback is not None:
-            height = self.jump_playback.cycle(dt)
-            if self.jump_playback.is_over:
-                self.jump_playback = None
-        return height
-
     def update_target_height(self, observation: dict, dt: float) -> None:
         """
         Update target base height from joystick inputs.
@@ -241,12 +221,7 @@ class HeightController:
             observation: Observation from the spine.
             dt: Duration in seconds until next cycle.
         """
-        playback_height = self.get_next_height_from_playback(observation, dt)
-        height = (
-            playback_height
-            if playback_height is not None
-            else self.get_next_height_from_joystick(observation, dt)
-        )
+        height = self.get_next_height_from_joystick(observation, dt)
         self.target_position_wheel_in_rest[2] = clamp(
             height, 0.0, self.max_crouch_height
         )
