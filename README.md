@@ -5,7 +5,7 @@ An agent for [Upkie](https://github.com/upkie/upkie/) that combines wheeled bala
 ## Run in simulation
 
 - Run the Bullet spine: `./start_simulation.sh`
-- Run the agent: `./tools/bazel run //pink_balancer -- -c bullet`
+- Run the agent: `make run_bullet`
 
 ## Run on the real robot
 
