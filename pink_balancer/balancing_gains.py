@@ -62,7 +62,7 @@ class BalancingGains:
 
     def __repr__(self):
         return (
-            "WheelBalancer.Gains("
+            "BalancingGains("
             f"pitch_damping={self.pitch_damping}, "
             f"pitch_stiffness={self.pitch_stiffness}, "
             f"position_damping={self.position_damping}, "
