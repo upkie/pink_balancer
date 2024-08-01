@@ -2,15 +2,12 @@
 
 An agent for [Upkie](https://github.com/upkie/upkie/) that combines wheeled balancing with inverse kinematics computed by [Pink](https://github.com/stephane-caron/pink). This is the controller that runs in the [first](https://www.youtube.com/shorts/8b36XcCgh7s) [two](https://www.youtube.com/watch?v=NO_TkHGS0wQ) videos of Upkie.
 
-## Run in simulation
+## Usage
 
-- Run the Bullet spine: `./start_simulation.sh`
-- Run the agent: `make run_bullet`
-
-## Run on the real robot
-
-- Build spines and agent: ``make build``
-- Upload to your Upkie: ``make upload``
-- SSH into your Upkie
-- Run the pi3hat spine: ``make run_pi3hat_spine``
-- Run the agent: ``make run_pink_balancer``
+- Install Python packages to a conda environment: ``conda create -f environment.yaml``
+- Activate conda environment: ``conda activate pink_balancer``
+- Run the Bullet spine: `./start_simulation.sh` (from your Upkie repository)
+- Run the agent with Bullet: `python pink_balancer/main.py -c bullet`
+- Upload this repository to your Upkie: ``make upload``
+- Run the pi3hat spine: ``pi3hat_spine`` (on your robot)
+- Run the agent: ``python pink_balancer/main.py -c $(hostname)``
