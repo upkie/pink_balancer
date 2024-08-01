@@ -1,27 +1,21 @@
-# Makefile for upkie targets
+# Makefile for Upkie agents
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2022 Stéphane Caron
-# Copyright 2023-2024 Inria
 
 # Hostname or IP address of the Raspberry Pi Uses the value from the
 # UPKIE_NAME environment variable, if defined. Valid usage: ``make upload
 # UPKIE_NAME=foo``
 REMOTE = ${UPKIE_NAME}
 
-BAZEL = $(CURDIR)/tools/bazelisk
 CURDATE = $(shell date --iso=seconds)
 CURDIR_NAME = $(shell basename $(CURDIR))
-RASPUNZEL = $(CURDIR)/tools/raspunzel
 
 # Help snippet adapted from:
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .PHONY: help
 help:
-	@echo "Host targets:\n"
+	@echo "Available targets:\n"
 	@grep -P '^[a-zA-Z0-9_-]+:.*? ## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-24s\033[0m %s\n", $$1, $$2}'
-	@echo "\nRaspberry Pi targets:\n"
-	@grep -P '^[a-zA-Z0-9_-]+:.*?### .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?### "}; {printf "    \033[36m%-24s\033[0m %s\n", $$1, $$2}'
 .DEFAULT_GOAL := help
 
 .PHONY: check_upkie_name
@@ -36,27 +30,9 @@ check_upkie_name:
 		exit 1; \
 	fi
 
-.PHONY: clean_broken_links
-clean_broken_links:
-	find -L $(CURDIR) -type l ! -exec test -e {} \; -delete
-
-.PHONY: build
-build: clean_broken_links  ## build Raspberry Pi targets
-	$(BAZEL) build --config=pi64 //pink_balancer
-
-.PHONY: clean
-clean:  ## clean all local build and intermediate files
-	$(BAZEL) clean --expunge
-
 .PHONY: upload
 upload: check_upkie_name build  ## upload built targets to the Raspberry Pi
 	ssh $(REMOTE) sudo date -s "$(CURDATE)"
 	ssh $(REMOTE) mkdir -p $(CURDIR_NAME)
 	ssh $(REMOTE) sudo find $(CURDIR_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
-	rsync -Lrtu --delete-after --delete-excluded --exclude bazel-out/ --exclude bazel-testlogs/ --exclude bazel-$(CURDIR_NAME)/ --exclude logs/ --progress $(CURDIR)/ $(REMOTE):$(CURDIR_NAME)/
-
-run_bullet:  ## run the agent with simulation configuration
-	python pink_balancer/main.py -c bullet
-
-run_agent:  ### run agent with Bazel on the Raspberry Pi
-	$(RASPUNZEL) run -v -s //pink_balancer
+	rsync -Lrtu --delete-after --delete-excluded --progress $(CURDIR)/ $(REMOTE):$(CURDIR_NAME)/
