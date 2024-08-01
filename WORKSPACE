@@ -17,15 +17,11 @@ add_default_repositories()
 load("@upkie//tools/workspace:default.bzl", add_upkie_repositories = "add_default_repositories")
 add_upkie_repositories()
 
-# @vulp is added by add_default_repositories
-load("@vulp//tools/workspace:default.bzl", add_vulp_repositories = "add_default_repositories")
-add_vulp_repositories()
-
-# @palimpsest is added by add_vulp_repositories
+# @palimpsest is added by add_upkie_repositories
 load("@palimpsest//tools/workspace:default.bzl", add_palimpsest_repositories = "add_default_repositories")
 add_palimpsest_repositories()
 
-# @pi3hat is added by add_vulp_repositories
+# @pi3hat is added by add_upkie_repositories
 load("@pi3hat//tools/workspace:default.bzl", add_pi3hat_repositories = "add_default_repositories")
 add_pi3hat_repositories()
 

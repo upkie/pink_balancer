@@ -13,9 +13,9 @@ from os import path
 import gin
 import upkie.config
 from loop_rate_limiters import RateLimiter
+from upkie.spine import SpineInterface
 from upkie.utils.raspi import configure_agent_process, on_raspi
 from upkie.utils.spdlog import logging
-from vulp.spine import SpineInterface
 from whole_body_controller import WholeBodyController
 
 
