@@ -45,7 +45,7 @@ class WholeBodyController:
         self.height_controller = HeightController(visualize=visualize)
         self.turning_gain_scale = turning_gain_scale
         self.wheel_balancer = WheelBalancer()  # type: ignore
-
+    
     def cycle(self, observation: dict, dt: float) -> dict:
         """
         Compute action for a new cycle.
