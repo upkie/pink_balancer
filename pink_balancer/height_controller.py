@@ -217,7 +217,7 @@ class HeightController:
             velocity = self.max_crouch_velocity * axis_value
         except KeyError:
             velocity = 0.0
-        
+
         height = self.target_height
         height += velocity * dt
         return height
@@ -378,7 +378,7 @@ class HeightController:
             self.configuration,
             self.tasks.values(),
             dt,
-            solver="cvxopt",
+            solver="proxqp",
         )
         self.configuration.integrate_inplace(velocity, dt)
         self.last_velocity = velocity
