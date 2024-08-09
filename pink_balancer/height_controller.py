@@ -94,14 +94,20 @@ class HeightController:
     max_crouch_height: float
     max_crouch_velocity: float
     robot: pin.RobotWrapper
-    target_position_wheel_in_rest: NDArray[float]
+    target_position_wheel_in_rest: dict[NDArray[float]]
     tasks: dict
     transform_rest_to_world: dict
+    max_height_difference: float
+    max_lean_velocity: float
+    target_height: float = 0
+    height_difference: float = 0
 
     def __init__(
         self,
         max_crouch_height: float,
         max_crouch_velocity: float,
+        max_height_difference: float,
+        max_lean_velocity: float,
         visualize: bool,
     ):
         """
@@ -177,9 +183,11 @@ class HeightController:
         self.last_velocity = np.zeros(robot.nv)
         self.max_crouch_height = max_crouch_height
         self.max_crouch_velocity = max_crouch_velocity
+        self.max_height_difference = max_height_difference
+        self.max_lean_velocity = max_lean_velocity
         self.robot = robot
         self.servo_layout = servo_layout
-        self.target_position_wheel_in_rest = np.zeros(3)
+        self.target_position_wheel_in_rest = {k: np.zeros(3) for k in ("left_contact", "right_contact")}
         self.target_offset = {
             "left_contact": np.zeros(3),
             "right_contact": np.zeros(3),
@@ -209,9 +217,32 @@ class HeightController:
             velocity = self.max_crouch_velocity * axis_value
         except KeyError:
             velocity = 0.0
-        height = self.target_position_wheel_in_rest[2]
+        
+        height = self.target_height
         height += velocity * dt
         return height
+
+    def get_next_height_difference_from_joystick(
+            self, observation: dict, dt: float
+    ):
+        """
+        Update the height difference from joystick inputs.
+
+        Args:
+            observation: Observation from the spine.
+            dt: Duration in seconds until next cycle.
+
+        Returns:
+            New height difference, in meters.
+        """
+        try:
+            axis_value: float = observation["joystick"]["pad_axis"][0]
+            velocity = self.max_lean_velocity * axis_value
+        except KeyError:
+            velocity = 0.0
+        delta = self.height_difference
+        delta += velocity * dt
+        return delta
 
     def update_target_height(self, observation: dict, dt: float) -> None:
         """
@@ -222,9 +253,26 @@ class HeightController:
             dt: Duration in seconds until next cycle.
         """
         height = self.get_next_height_from_joystick(observation, dt)
-        self.target_position_wheel_in_rest[2] = clamp(
-            height, 0.0, self.max_crouch_height
+
+        self.target_height = clamp(
+            height, 0, self.max_crouch_height
         )
+
+        height_difference = self.get_next_height_difference_from_joystick(observation, dt)
+        self.height_difference = clamp(
+            height_difference,
+            -self.max_height_difference, self.max_height_difference
+        )
+
+        for wheel in ('left_contact', 'right_contact'):
+            offset = self.height_difference if wheel == 'right_contact' else -self.height_difference
+            offset /= 2
+
+            # Clamp target heights
+            self.target_position_wheel_in_rest[wheel][2] = clamp(
+                self.target_height + offset,
+                0.0, self.max_crouch_height
+            )
 
     def update_ik_targets(self, observation: dict, dt: float) -> None:
         """
@@ -234,14 +282,14 @@ class HeightController:
             observation: Observation from the spine.
             dt: Duration in seconds until next cycle.
         """
-        transform_common_to_rest = pin.SE3(
-            rotation=np.eye(3),
-            translation=self.target_position_wheel_in_rest,
-        )
         for target in ["left_contact", "right_contact"]:
+            transform_common_to_rest = pin.SE3(
+                rotation=np.eye(3),
+                translation=self.target_position_wheel_in_rest[target],
+            )
             transform_target_to_common = pin.SE3(
                 rotation=np.eye(3),
-                translation=self.target_offset[target],
+                translation=self.target_offset[target]
             )
             transform_target_to_world = (
                 self.transform_rest_to_world[target]
@@ -305,7 +353,8 @@ class HeightController:
         """
         return {
             "configuration": self.configuration.q,
-            "target_height": self.target_position_wheel_in_rest[2],
+            "left_target_height": self.target_position_wheel_in_rest['left_contact'][2],
+            "right_target_height": self.target_position_wheel_in_rest['right_contact'][2],
             "velocity": self.last_velocity,
         }
 
@@ -329,7 +378,7 @@ class HeightController:
             self.configuration,
             self.tasks.values(),
             dt,
-            solver="proxqp",
+            solver="cvxopt",
         )
         self.configuration.integrate_inplace(velocity, dt)
         self.last_velocity = velocity

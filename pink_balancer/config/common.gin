@@ -6,6 +6,8 @@ import whole_body_controller
 
 HeightController.max_crouch_height = 0.08         # [m]
 HeightController.max_crouch_velocity = 0.05       # [m] / [s]
+HeightController.max_height_difference = 0.02     # [m]
+HeightController.max_lean_velocity = 0.04         # [m] / [s]
 HeightController.visualize = False
 
 WheelBalancer.air_return_period = 1.0             # [s]
