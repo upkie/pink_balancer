@@ -289,7 +289,7 @@ class HeightController:
             )
             transform_target_to_common = pin.SE3(
                 rotation=np.eye(3),
-                translation=self.target_offset[target]
+                translation=self.target_offset[target],
             )
             transform_target_to_world = (
                 self.transform_rest_to_world[target]
