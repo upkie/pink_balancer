@@ -353,8 +353,8 @@ class HeightController:
         """
         return {
             "configuration": self.configuration.q,
-            "left_target_height": self.target_position_wheel_in_rest['left_contact'][2],
-            "right_target_height": self.target_position_wheel_in_rest['right_contact'][2],
+            "target_height": self.target_height,
+            "height_difference": self.height_difference,
             "velocity": self.last_velocity,
         }
 
