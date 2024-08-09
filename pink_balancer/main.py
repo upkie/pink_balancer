@@ -26,7 +26,6 @@ def parse_command_line_arguments() -> argparse.Namespace:
     Returns:
         Command-line arguments.
     """
-    hostname = socket.gethostname().lower()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-c",
@@ -35,7 +34,7 @@ def parse_command_line_arguments() -> argparse.Namespace:
         help="Agent configuration to apply",
         type=str,
         required=True,
-        choices=sorted(["bullet", hostname]),
+        choices=sorted(["bullet", "hostname"]),
     )
     parser.add_argument(
         "--visualize",
@@ -74,6 +73,7 @@ def run(
 
 
 def load_gin_configuration(name: str) -> None:
+    agent_dir = path.dirname(__file__)
     logging.info(f"Loading configuration '{name}.gin'")
     try:
         gin.parse_config_file(f"{agent_dir}/config/{name}.gin")
@@ -83,11 +83,15 @@ def load_gin_configuration(name: str) -> None:
 
 if __name__ == "__main__":
     args = parse_command_line_arguments()
-    agent_dir = path.dirname(__file__)
 
     # Agent configuration
     load_gin_configuration("common")
-    load_gin_configuration(args.config)
+    if args.config == "hostname":
+        hostname = socket.gethostname().lower()
+        logging.info(f"Loading configuration from hostname '{hostname}'")
+        load_gin_configuration(hostname)
+    elif args.config is not None:
+        load_gin_configuration(args.config)
 
     # On Raspberry Pi, configure the process to run on a separate CPU core
     if on_raspi():

@@ -31,7 +31,7 @@ check_upkie_name:
 	fi
 
 .PHONY: upload
-upload: check_upkie_name build  ## upload built targets to the Raspberry Pi
+upload: check_upkie_name ## upload built targets to the Raspberry Pi
 	ssh $(REMOTE) sudo date -s "$(CURDATE)"
 	ssh $(REMOTE) mkdir -p $(CURDIR_NAME)
 	ssh $(REMOTE) sudo find $(CURDIR_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
