@@ -8,7 +8,7 @@
 import argparse
 import socket
 import traceback
-from os import path
+from pathlib import Path
 
 import gin
 import upkie.config
@@ -16,6 +16,7 @@ from loop_rate_limiters import RateLimiter
 from upkie.spine import SpineInterface
 from upkie.utils.raspi import configure_agent_process, on_raspi
 from upkie.utils.spdlog import logging
+
 from whole_body_controller import WholeBodyController
 
 
@@ -31,10 +32,8 @@ def parse_command_line_arguments() -> argparse.Namespace:
         "-c",
         "--config",
         metavar="config",
-        help="Agent configuration to apply",
+        help="Additional agent configuration to apply",
         type=str,
-        required=True,
-        choices=sorted(["bullet", "hostname"]),
     )
     parser.add_argument(
         "--visualize",
@@ -72,26 +71,18 @@ def run(
         rate.sleep()
 
 
-def load_gin_configuration(name: str) -> None:
-    agent_dir = path.dirname(__file__)
-    logging.info(f"Loading configuration '{name}.gin'")
-    try:
-        gin.parse_config_file(f"{agent_dir}/config/{name}.gin")
-    except OSError as e:
-        raise FileNotFoundError(f"Configuration '{name}.gin' not found") from e
-
-
 if __name__ == "__main__":
     args = parse_command_line_arguments()
 
     # Agent configuration
-    load_gin_configuration("common")
-    if args.config == "hostname":
-        hostname = socket.gethostname().lower()
-        logging.info(f"Loading configuration from hostname '{hostname}'")
-        load_gin_configuration(hostname)
-    elif args.config is not None:
-        load_gin_configuration(args.config)
+    hostname = socket.gethostname()
+    config_dir = Path(__file__).parent / "config"
+    gin.parse_config_file(config_dir / "base.gin")
+    host_config = config_dir / f"{hostname}.gin"
+    if host_config.exists():
+        gin.parse_config_file(host_config)
+    if args.config is not None:
+        gin.parse_config_file(config_dir / f"{args.config}.gin")
 
     # On Raspberry Pi, configure the process to run on a separate CPU core
     if on_raspi():
