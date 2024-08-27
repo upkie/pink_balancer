@@ -9,7 +9,7 @@ import gin
 from upkie.utils.clamp import clamp
 
 from .height_controller import HeightController
-from .wheel_balancer import WheelBalancer
+from .wheel_controller import WheelController
 
 
 @gin.configurable
@@ -42,7 +42,7 @@ class WholeBodyController:
         self.gain_scale = clamp(gain_scale, 0.1, 2.0)
         self.height_controller = HeightController(visualize=visualize)
         self.turning_gain_scale = turning_gain_scale
-        self.wheel_balancer = WheelBalancer()
+        self.wheel_controller = WheelController()
 
     def cycle(self, observation: dict, dt: float) -> dict:
         """
@@ -56,7 +56,7 @@ class WholeBodyController:
             Dictionary with the new action and some logging.
         """
         leg_action = self.height_controller.cycle(observation, dt)
-        wheel_action = self.wheel_balancer.cycle(observation, dt)
+        wheel_action = self.wheel_controller.cycle(observation, dt)
         servo_action = {
             "left_hip": leg_action["servo"]["left_hip"],
             "left_knee": leg_action["servo"]["left_knee"],
@@ -65,7 +65,7 @@ class WholeBodyController:
             "right_knee": leg_action["servo"]["right_knee"],
             "right_wheel": wheel_action["servo"]["right_wheel"],
         }
-        turning_prob = self.wheel_balancer.turning_probability
+        turning_prob = self.wheel_controller.turning_probability
         kp_scale = self.gain_scale + self.turning_gain_scale * turning_prob
         kd_scale = self.gain_scale + self.turning_gain_scale * turning_prob
         for joint_name in ["left_hip", "left_knee", "right_hip", "right_knee"]:
@@ -75,6 +75,6 @@ class WholeBodyController:
         action = {
             "servo": servo_action,
             "height_controller": self.height_controller.log(),
-            "wheel_balancer": self.wheel_balancer.log(),
+            "wheel_controller": self.wheel_controller.log(),
         }
         return action

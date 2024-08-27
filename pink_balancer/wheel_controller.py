@@ -12,11 +12,11 @@ import numpy as np
 from upkie.utils.clamp import clamp_abs
 from upkie.utils.filters import abs_bounded_derivative_filter
 
-from .sagittal_balance import PIBalancer
+from .sagittal_balance import PIBalancer, SagittalBalancer
 
 
 @gin.configurable
-class WheelBalancer:
+class WheelController:
     """
     Base class for wheel balancers.
 
@@ -45,6 +45,7 @@ class WheelBalancer:
     integral_error_velocity: float
     max_target_accel: float
     max_target_velocity: float
+    sagittal_balancer: SagittalBalancer
     target_ground_velocity: float
     target_yaw_velocity: float
     turning_deadband: float

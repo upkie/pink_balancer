@@ -12,10 +12,11 @@ from upkie.utils.clamp import clamp, clamp_abs
 from upkie.utils.filters import low_pass_filter
 
 from .pi_balancer_gains import PIBalancerGains
+from .sagittal_balancer import SagittalBalancer
 
 
 @gin.configurable
-class PIBalancer:
+class PIBalancer(SagittalBalancer):
     """
     Balancing by proportional-integrative feedback of the base pitch error and
     ground position error to wheel velocities.

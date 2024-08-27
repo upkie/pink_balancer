@@ -9,4 +9,4 @@
 # meters at full crouch.
 PIBalancer.max_target_distance = 1.5         # [m]
 
-WheelBalancer.max_ground_velocity = 2.0           # [m] / [s]
+WheelController.max_ground_velocity = 2.0           # [m] / [s]

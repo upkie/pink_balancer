@@ -5,7 +5,9 @@
 # Copyright 2024 Inria
 
 from .pi_balancer import PIBalancer
+from .sagittal_balancer import SagittalBalancer
 
 __all__ = [
     "PIBalancer",
+    "SagittalBalancer",
 ]

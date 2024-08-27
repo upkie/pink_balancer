@@ -7,4 +7,4 @@ PIBalancerGains.pitch_stiffness = 20.0
 PIBalancerGains.position_damping = 0.7
 PIBalancerGains.position_stiffness = 1.6
 
-WheelBalancer.wheel_radius = 0.055  # [m]
+WheelController.wheel_radius = 0.055  # [m]
