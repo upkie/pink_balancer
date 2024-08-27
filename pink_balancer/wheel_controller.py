@@ -5,14 +5,14 @@
 # Copyright 2022 Stéphane Caron
 # Copyright 2023 Inria
 
-"""Keep Upkie up using its wheels."""
+"""Control wheels to track ground and yaw velocity targets."""
 
 import gin
 import numpy as np
 from upkie.utils.clamp import clamp_abs
 from upkie.utils.filters import abs_bounded_derivative_filter
 
-from .sagittal_balance import PIBalancer, SagittalBalancer
+from .sagittal_balance import MPCBalancer, PIBalancer, SagittalBalancer
 
 
 @gin.configurable
@@ -24,8 +24,6 @@ class WheelController:
         ground_velocity: Sagittal velocity in [m] / [s].
         integral_error_velocity: Integral term contributing to the sagittal
             velocity, in [m] / [s].
-        max_ground_velocity: Maximum commanded ground velocity no matter what,
-            in [m] / [s].
         max_target_accel: Maximum acceleration for the ground target, in
             [m] / [s]². Does not affect the commanded ground velocity.
         max_target_velocity: Maximum velocity for the ground target, in
@@ -55,7 +53,7 @@ class WheelController:
 
     def __init__(
         self,
-        max_ground_velocity: float,
+        balancer_class: str,
         max_target_accel: float,
         max_target_velocity: float,
         max_yaw_accel: float,
@@ -68,8 +66,6 @@ class WheelController:
         Initialize balancer.
 
         Args:
-            max_ground_velocity: Maximum commanded ground velocity no matter
-                what, in [m] / [s].
             max_target_accel: Maximum acceleration for the ground target, in
                 [m] / [s]². This bound does not affect the commanded ground
                 velocity.
@@ -85,13 +81,14 @@ class WheelController:
             wheel_radius Wheel: radius in [m].
         """
         assert 0.0 <= turning_deadband <= 1.0
+        sagittal_balancer = (
+            MPCBalancer() if balancer_class == "MPCBalancer" else PIBalancer()
+        )
         self.max_target_accel = max_target_accel
         self.max_target_velocity = max_target_velocity
         self.max_yaw_accel = max_yaw_accel
         self.max_yaw_velocity = max_yaw_velocity
-        self.sagittal_balancer = PIBalancer(
-            max_ground_velocity=max_ground_velocity
-        )
+        self.sagittal_balancer = sagittal_balancer
         self.target_ground_velocity = 0.0
         self.target_yaw_velocity = 0.0
         self.turning_deadband = turning_deadband

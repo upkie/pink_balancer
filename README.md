@@ -11,3 +11,7 @@ An agent for [Upkie](https://github.com/upkie/upkie/) that combines wheeled bala
 - Upload this repository to your Upkie: ``make upload``
 - Run the pi3hat spine: ``pi3hat_spine`` (on your robot)
 - Run the agent: ``python pink_balancer/main.py -c $(hostname)``
+
+## Configuration tweaks
+
+- Select the MPC or PI sagittal balancer in `WheelController.balancer_class`

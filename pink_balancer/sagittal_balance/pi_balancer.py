@@ -44,7 +44,6 @@ class PIBalancer(SagittalBalancer):
         self,
         air_return_period: float,
         fall_pitch: float,
-        max_ground_velocity: float,
         max_integral_error_velocity: float,
         max_target_distance: float,
     ):
@@ -54,8 +53,6 @@ class PIBalancer(SagittalBalancer):
         Args:
             air_return_period: Cutoff period for resetting integrators while
                 the robot is in the air, in [s].
-            max_ground_velocity: Maximum commanded ground velocity no matter
-                what, in [m] / [s].
             max_integral_error_velocity: Maximum integral error velocity, in
                 [m] / [s].
             max_target_distance: Maximum distance from the current ground
@@ -67,7 +64,6 @@ class PIBalancer(SagittalBalancer):
         self.fall_pitch = fall_pitch
         self.gains = PIBalancerGains()
         self.integral_error_velocity = 0.0
-        self.max_ground_velocity = max_ground_velocity
         self.max_integral_error_velocity = max_integral_error_velocity
         self.max_target_distance = max_target_distance
         self.target_ground_position = 0.0
@@ -112,7 +108,7 @@ class PIBalancer(SagittalBalancer):
         pitch = observation["base_orientation"]["pitch"]
         if abs(pitch) > self.fall_pitch:
             self.integral_error_velocity = 0.0  # [m] / [s]
-            self.ground_velocity = 0.0  # [m] / [s]
+            self.commanded_velocity = 0.0  # [m] / [s]
             raise FallDetected(f"Base angle {pitch=:.3} rad denotes a fall")
 
         ground_position = observation["wheel_odometry"]["position"]
@@ -192,13 +188,13 @@ class PIBalancer(SagittalBalancer):
         #
         upkie_trick_velocity = -target_ground_velocity
 
-        self.ground_velocity = (
+        self.commanded_velocity = (
             upkie_trick_velocity - kp.dot(error) - self.integral_error_velocity
         )
-        self.ground_velocity = clamp_abs(
-            self.ground_velocity, self.max_ground_velocity
+        self.commanded_velocity = clamp_abs(
+            self.commanded_velocity, self.max_ground_velocity
         )
-        return self.ground_velocity
+        return self.commanded_velocity
 
     def log(self) -> dict:
         """
@@ -210,7 +206,7 @@ class PIBalancer(SagittalBalancer):
         return {
             "error": self.error,
             "gains": self.gains.__dict__,
-            "ground_velocity": self.ground_velocity,
+            "commanded_velocity": self.commanded_velocity,
             "integral_error_velocity": self.integral_error_velocity,
             "target_ground_position": self.target_ground_position,
         }
