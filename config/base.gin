@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import whole_body_controller
-
 HeightController.max_crouch_height = 0.08         # [m]
 HeightController.max_crouch_velocity = 0.05       # [m] / [s]
 HeightController.max_height_difference = 0.02     # [m]

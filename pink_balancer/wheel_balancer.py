@@ -11,7 +11,7 @@ from typing import Tuple
 
 import gin
 import numpy as np
-from balancing_gains import BalancingGains
+from .balancing_gains import BalancingGains
 from numpy.typing import NDArray
 from upkie.utils.clamp import clamp, clamp_abs
 from upkie.utils.exceptions import FallDetected

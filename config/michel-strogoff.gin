@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import whole_body_controller
-
 WheelBalancer.wheel_radius = 0.055  # [m]
 
 BalancingGains.pitch_damping = 1.8
