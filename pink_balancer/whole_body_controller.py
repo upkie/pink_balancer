@@ -65,7 +65,6 @@ class WholeBodyController:
             "right_knee": leg_action["servo"]["right_knee"],
             "right_wheel": wheel_action["servo"]["right_wheel"],
         }
-
         turning_prob = self.wheel_balancer.turning_probability
         kp_scale = self.gain_scale + self.turning_gain_scale * turning_prob
         kd_scale = self.gain_scale + self.turning_gain_scale * turning_prob

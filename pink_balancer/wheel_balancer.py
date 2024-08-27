@@ -7,11 +7,8 @@
 
 """Keep Upkie up using its wheels."""
 
-from typing import Tuple
-
 import gin
 import numpy as np
-from numpy.typing import NDArray
 from upkie.utils.clamp import clamp_abs
 from upkie.utils.filters import abs_bounded_derivative_filter
 
@@ -117,14 +114,6 @@ class WheelBalancer:
         )
         return log_dict
 
-    def process_joystick_buttons(self, observation: dict) -> None:
-        """
-        Process joystick buttons.
-
-        Args:
-            observation: Latest observation.
-        """
-
     def cycle(self, observation: dict, dt: float) -> None:
         """
         Compute a new ground velocity.
@@ -136,62 +125,35 @@ class WheelBalancer:
         Returns:
             New ground velocity, in [m] / [s].
         """
-        self.process_joystick_buttons(observation)
         self.update_target_ground_velocity(observation, dt)
         self.update_target_yaw_velocity(observation, dt)
 
         ground_velocity = self.sagittal_balancer.compute_ground_velocity(
             self.target_ground_velocity, observation, dt
         )
-        left_velocity, right_velocity = self.get_wheel_velocities(
-            ground_velocity,
-            observation["height_controller"]["position_right_in_left"],
-        )
-        servo_action = {
-            "left_wheel": {
-                "position": np.nan,
-                "velocity": left_velocity,
-            },
-            "right_wheel": {
-                "position": np.nan,
-                "velocity": right_velocity,
-            },
-        }
-        return {"servo": servo_action}
 
-    def get_wheel_velocities(
-        self,
-        ground_velocity: float,
-        position_right_in_left: NDArray[float],
-    ) -> Tuple[float, float]:
-        """
-        Get left and right wheel velocities.
-
-        Args:
-            position_right_in_left: Translation from the left contact frame
-                to the right contact frame, expressed in the left contact
-                frame. Equivalently, linear coordinates of the pose of the
-                right contact frame with respect to the left contact frame.
-
-        Returns:
-            Tuple with `left_wheel_velocity` (left wheel velocity in rad/s) and
-            `right_wheel_velocity` (right wheel velocity in rad/s).
-
-        Note:
-            For now we assume that the two wheels are parallel to the ground,
-            so that the rotation from one frame to the other is the identity.
-        """
         # Sagittal translation
         left_wheel_velocity: float = +ground_velocity / self.wheel_radius
         right_wheel_velocity: float = -ground_velocity / self.wheel_radius
 
         # Yaw rotation
-        contact_radius = 0.5 * np.linalg.norm(position_right_in_left)
+        delta = observation["height_controller"]["position_right_in_left"]
+        contact_radius = 0.5 * np.linalg.norm(delta)
         yaw_to_wheel = contact_radius / self.wheel_radius
         left_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
         right_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
 
-        return left_wheel_velocity, right_wheel_velocity
+        servo_action = {
+            "left_wheel": {
+                "position": np.nan,
+                "velocity": left_wheel_velocity,
+            },
+            "right_wheel": {
+                "position": np.nan,
+                "velocity": right_wheel_velocity,
+            },
+        }
+        return {"servo": servo_action}
 
     def update_target_ground_velocity(
         self, observation: dict, dt: float
