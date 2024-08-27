@@ -6,14 +6,14 @@
 # Copyright 2023-2024 Inria
 
 import gin
-from height_controller import HeightController
 from upkie.utils.clamp import clamp
-from wheel_balancer import WheelBalancer
+from .wheel_balancer import WheelBalancer
+
+from .height_controller import HeightController
 
 
 @gin.configurable
 class WholeBodyController:
-
     """
     Coordinate leg inverse kinematics and wheel balancing.
 
