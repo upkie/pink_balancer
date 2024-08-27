@@ -11,12 +11,11 @@ from upkie.exceptions import FallDetected
 from upkie.utils.clamp import clamp, clamp_abs
 from upkie.utils.filters import low_pass_filter
 
-from .balancing_gains import BalancingGains
-from .wheel_balancer import WheelBalancer
+from .pi_balancer_gains import PIBalancerGains
 
 
 @gin.configurable
-class PIWheelBalancer(WheelBalancer):
+class PIBalancer:
     """
     Balancing by proportional-integrative feedback of the base pitch error and
     ground position error to wheel velocities.
@@ -35,7 +34,7 @@ class PIWheelBalancer(WheelBalancer):
 
     air_return_period: float
     error: np.ndarray
-    gains: BalancingGains
+    gains: PIBalancerGains
     max_integral_error_velocity: float
     max_target_distance: float
     target_ground_position: float
@@ -44,6 +43,7 @@ class PIWheelBalancer(WheelBalancer):
         self,
         air_return_period: float,
         fall_pitch: float,
+        max_ground_velocity: float,
         max_integral_error_velocity: float,
         max_target_distance: float,
     ):
@@ -53,6 +53,8 @@ class PIWheelBalancer(WheelBalancer):
         Args:
             air_return_period: Cutoff period for resetting integrators while
                 the robot is in the air, in [s].
+            max_ground_velocity: Maximum commanded ground velocity no matter
+                what, in [m] / [s].
             max_integral_error_velocity: Maximum integral error velocity, in
                 [m] / [s].
             max_target_distance: Maximum distance from the current ground
@@ -62,7 +64,9 @@ class PIWheelBalancer(WheelBalancer):
         self.air_return_period = air_return_period
         self.error = np.zeros(2)
         self.fall_pitch = fall_pitch
-        self.gains = BalancingGains()
+        self.gains = PIBalancerGains()
+        self.integral_error_velocity = 0.0
+        self.max_ground_velocity = max_ground_velocity
         self.max_integral_error_velocity = max_integral_error_velocity
         self.max_target_distance = max_target_distance
         self.target_ground_position = 0.0
@@ -87,12 +91,18 @@ class PIWheelBalancer(WheelBalancer):
         except KeyError:
             pass
 
-    def compute_ground_velocity(self, observation: dict, dt: float) -> float:
+    def compute_ground_velocity(
+        self,
+        target_ground_velocity: float,
+        observation: dict,
+        dt: float,
+    ) -> float:
         """
         Compute a new ground velocity.
 
         Args:
-            observation: Latest observation.
+            target_ground_velocity: Target ground velocity in [m] / [s].
+            observation: Latest observation dictionary.
             dt: Time in [s] until next cycle.
 
         Returns:
@@ -120,7 +130,7 @@ class PIWheelBalancer(WheelBalancer):
             self.integral_error_velocity = low_pass_filter(
                 self.integral_error_velocity, self.air_return_period, 0.0, dt
             )
-            # We don't reset self.target_ground_velocity: either takeoff
+            # We don't reset target_ground_velocity: either takeoff
             # detection is a false positive and we should resume close to the
             # pre-takeoff state, or the robot is really in the air and the user
             # should stop smashing the joystick like a bittern ;p
@@ -141,7 +151,7 @@ class PIWheelBalancer(WheelBalancer):
             self.integral_error_velocity = clamp_abs(
                 self.integral_error_velocity, self.max_integral_error_velocity
             )
-            self.target_ground_position += self.target_ground_velocity * dt
+            self.target_ground_position += target_ground_velocity * dt
             self.target_ground_position = clamp(
                 self.target_ground_position,
                 ground_position - self.max_target_distance,
@@ -156,9 +166,9 @@ class PIWheelBalancer(WheelBalancer):
         )
 
         # Non-minimum phase trick: as per control theory's book, the proper
-        # feedforward velocity should be ``+self.target_ground_velocity``.
-        # However, it is with resolute purpose that it sends
-        # ``-self.target_ground_velocity`` instead!
+        # feedforward velocity should be ``+target_ground_velocity``. However,
+        # it is with resolute purpose that it sends ``-target_ground_velocity``
+        # instead!
         #
         # Try both on the robot, you will see the difference :)
         #
@@ -179,7 +189,7 @@ class PIWheelBalancer(WheelBalancer):
         #
         # Unconvinced? Try it on the robot. You will feel Upkie's trick ;)
         #
-        upkie_trick_velocity = -self.target_ground_velocity
+        upkie_trick_velocity = -target_ground_velocity
 
         self.ground_velocity = (
             upkie_trick_velocity - kp.dot(error) - self.integral_error_velocity
@@ -196,14 +206,10 @@ class PIWheelBalancer(WheelBalancer):
         Returns:
             Log data as a dictionary.
         """
-        log_dict = super().log()
-        log_dict.update(
-            {
-                "error": self.error,
-                "gains": self.gains.__dict__,
-                "ground_velocity": self.ground_velocity,
-                "integral_error_velocity": self.integral_error_velocity,
-                "target_ground_position": self.target_ground_position,
-            }
-        )
-        return log_dict
+        return {
+            "error": self.error,
+            "gains": self.gains.__dict__,
+            "ground_velocity": self.ground_velocity,
+            "integral_error_velocity": self.integral_error_velocity,
+            "target_ground_position": self.target_ground_position,
+        }

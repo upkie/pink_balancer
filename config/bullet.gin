@@ -7,6 +7,6 @@
 # though it is able to balance itself. Empirically in Bullet with the gains
 # above the steady-state error is around 1.2 meters with straight legs and 1.5
 # meters at full crouch.
-PIWheelBalancer.max_target_distance = 1.5         # [m]
+PIBalancer.max_target_distance = 1.5         # [m]
 
 WheelBalancer.max_ground_velocity = 2.0           # [m] / [s]

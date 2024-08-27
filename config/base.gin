@@ -2,10 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-BalancingGains.pitch_damping = 10.0
-BalancingGains.pitch_stiffness = 20.0
-BalancingGains.position_damping = 5.0
-BalancingGains.position_stiffness = 2.0
+PIBalancerGains.pitch_damping = 10.0
+PIBalancerGains.pitch_stiffness = 20.0
+PIBalancerGains.position_damping = 5.0
+PIBalancerGains.position_stiffness = 2.0
 
 HeightController.max_crouch_height = 0.08           # [m]
 HeightController.max_crouch_velocity = 0.05         # [m] / [s]
@@ -13,10 +13,10 @@ HeightController.max_height_difference = 0.02       # [m]
 HeightController.max_lean_velocity = 0.04           # [m] / [s]
 HeightController.visualize = False
 
-PIWheelBalancer.air_return_period = 1.0             # [s]
-PIWheelBalancer.fall_pitch = 1.0                    # [rad]
-PIWheelBalancer.max_integral_error_velocity = 10.0  # [m] / [s]
-PIWheelBalancer.max_target_distance = 1.0           # [m]
+PIBalancer.air_return_period = 1.0             # [s]
+PIBalancer.fall_pitch = 1.0                    # [rad]
+PIBalancer.max_integral_error_velocity = 10.0  # [m] / [s]
+PIBalancer.max_target_distance = 1.0           # [m]
 
 WheelBalancer.max_ground_velocity = 1.0             # [m] / [s]
 WheelBalancer.max_target_accel = 0.3                # [m] / [s]²

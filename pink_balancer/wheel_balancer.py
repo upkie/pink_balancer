@@ -7,7 +7,6 @@
 
 """Keep Upkie up using its wheels."""
 
-import abc
 from typing import Tuple
 
 import gin
@@ -15,6 +14,8 @@ import numpy as np
 from numpy.typing import NDArray
 from upkie.utils.clamp import clamp_abs
 from upkie.utils.filters import abs_bounded_derivative_filter
+
+from .sagittal_balance import PIBalancer
 
 
 @gin.configurable
@@ -45,7 +46,6 @@ class WheelBalancer:
 
     ground_velocity: float
     integral_error_velocity: float
-    max_ground_velocity: float
     max_target_accel: float
     max_target_velocity: float
     target_ground_velocity: float
@@ -87,31 +87,19 @@ class WheelBalancer:
             wheel_radius Wheel: radius in [m].
         """
         assert 0.0 <= turning_deadband <= 1.0
-        self.integral_error_velocity = 0.0
-        self.max_ground_velocity = max_ground_velocity
         self.max_target_accel = max_target_accel
         self.max_target_velocity = max_target_velocity
         self.max_yaw_accel = max_yaw_accel
         self.max_yaw_velocity = max_yaw_velocity
+        self.sagittal_balancer = PIBalancer(
+            max_ground_velocity=max_ground_velocity
+        )
         self.target_ground_velocity = 0.0
         self.target_yaw_velocity = 0.0
         self.turning_deadband = turning_deadband
         self.turning_decision_time = turning_decision_time
         self.turning_probability = 0.0
         self.wheel_radius = wheel_radius
-
-    @abc.abstractmethod
-    def compute_ground_velocity(self, observation: dict, dt: float) -> float:
-        """
-        Compute a new ground velocity.
-
-        Args:
-            observation: Latest observation.
-            dt: Time in [s] until next cycle.
-
-        Returns:
-            New ground velocity, in [m] / [s].
-        """
 
     def log(self) -> dict:
         """
@@ -120,10 +108,14 @@ class WheelBalancer:
         Returns:
             Log data as a dictionary.
         """
-        return {
-            "target_ground_velocity": self.target_ground_velocity,
-            "target_yaw_velocity": self.target_yaw_velocity,
-        }
+        log_dict = self.sagittal_balancer.log()
+        log_dict.update(
+            {
+                "target_ground_velocity": self.target_ground_velocity,
+                "target_yaw_velocity": self.target_yaw_velocity,
+            }
+        )
+        return log_dict
 
     def process_joystick_buttons(self, observation: dict) -> None:
         """
@@ -148,7 +140,9 @@ class WheelBalancer:
         self.update_target_ground_velocity(observation, dt)
         self.update_target_yaw_velocity(observation, dt)
 
-        ground_velocity = self.compute_ground_velocity(observation, dt)
+        ground_velocity = self.sagittal_balancer.compute_ground_velocity(
+            self.target_ground_velocity, observation, dt
+        )
         left_velocity, right_velocity = self.get_wheel_velocities(
             ground_velocity,
             observation["height_controller"]["position_right_in_left"],

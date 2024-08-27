@@ -9,7 +9,7 @@ import gin
 from upkie.utils.clamp import clamp
 
 from .height_controller import HeightController
-from .pi_wheel_balancer import PIWheelBalancer
+from .wheel_balancer import WheelBalancer
 
 
 @gin.configurable
@@ -42,7 +42,7 @@ class WholeBodyController:
         self.gain_scale = clamp(gain_scale, 0.1, 2.0)
         self.height_controller = HeightController(visualize=visualize)
         self.turning_gain_scale = turning_gain_scale
-        self.wheel_balancer = PIWheelBalancer()
+        self.wheel_balancer = WheelBalancer()
 
     def cycle(self, observation: dict, dt: float) -> dict:
         """
