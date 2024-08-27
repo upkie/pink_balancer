@@ -66,7 +66,7 @@ class MPCBalancer(SagittalBalancer):
 
     def compute_ground_velocity(
         self,
-        target_ground_velocity: float,
+        target_ground_velocity: float,  # TODO(scaron): use this
         observation: dict,
         dt: float,
     ) -> float:
@@ -114,7 +114,7 @@ class MPCBalancer(SagittalBalancer):
 
         if not floor_contact:
             self.commanded_velocity = low_pass_filter(
-                prev_output=target_ground_velocity,
+                prev_output=self.commanded_velocity,
                 cutoff_period=0.1,
                 new_input=0.0,
                 dt=dt,
