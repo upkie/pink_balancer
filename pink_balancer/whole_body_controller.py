@@ -7,9 +7,9 @@
 
 import gin
 from upkie.utils.clamp import clamp
-from .wheel_balancer import WheelBalancer
 
 from .height_controller import HeightController
+from .pi_wheel_balancer import PIWheelBalancer
 
 
 @gin.configurable
@@ -19,13 +19,11 @@ class WholeBodyController:
 
     Attributes:
         gain_scale: PD gain scale for hip and knee joints.
-        tasks: Dictionary of inverse kinematics tasks.
         turning_gain_scale: Additional gain scale added when the robot is
             turning to keep the legs stiff while the ground pulls them apart.
     """
 
     gain_scale: float
-    tasks: dict
     turning_gain_scale: float
 
     def __init__(
@@ -44,7 +42,7 @@ class WholeBodyController:
         self.gain_scale = clamp(gain_scale, 0.1, 2.0)
         self.height_controller = HeightController(visualize=visualize)
         self.turning_gain_scale = turning_gain_scale
-        self.wheel_balancer = WheelBalancer()  # type: ignore
+        self.wheel_balancer = PIWheelBalancer()
 
     def cycle(self, observation: dict, dt: float) -> dict:
         """

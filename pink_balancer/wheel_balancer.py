@@ -7,47 +7,32 @@
 
 """Keep Upkie up using its wheels."""
 
+import abc
 from typing import Tuple
 
 import gin
 import numpy as np
-from .balancing_gains import BalancingGains
 from numpy.typing import NDArray
-from upkie.utils.clamp import clamp, clamp_abs
-from upkie.utils.exceptions import FallDetected
-from upkie.utils.filters import abs_bounded_derivative_filter, low_pass_filter
+from upkie.utils.clamp import clamp_abs
+from upkie.utils.filters import abs_bounded_derivative_filter
 
 
 @gin.configurable
 class WheelBalancer:
     """
-    Balancing by proportional-derivative feedback of the body pitch error to
-    wheel accelerations:
-
-        body pitch error --(PD)--> wheel accelerations
+    Base class for wheel balancers.
 
     Attributes:
-        air_return_period: Cutoff period for resetting integrators while the
-            robot is in the air, in [s].
-        error: Two-dimensional vector of ground position and base pitch errors.
-        gains: Velocity controller gains.
         ground_velocity: Sagittal velocity in [m] / [s].
         integral_error_velocity: Integral term contributing to the sagittal
             velocity, in [m] / [s].
         max_ground_velocity: Maximum commanded ground velocity no matter what,
             in [m] / [s].
-        max_integral_error_velocity: Maximum integral error velocity, in [m] /
-            [s].
         max_target_accel: Maximum acceleration for the ground target, in
             [m] / [s]². Does not affect the commanded ground velocity.
-        max_target_distance: Maximum distance from the current ground position
-            to the target, in [m].
         max_target_velocity: Maximum velocity for the ground target, in
             [m] / [s]. Indirectly affects the commanded ground velocity.
-        pitch: Current IMU pitch angle in [rad].
-        target_ground_position: Target ground sagittal position in [m].
         target_ground_velocity: Target ground sagittal velocity in [m] / [s].
-        target_yaw_position: Target yaw position in [rad].
         target_yaw_velocity: Target yaw velocity in [rad] / [s].
         turning_deadband: Joystick axis value between 0.0 and 1.0 below which
             legs stiffen but the turning motion doesn't start.
@@ -58,20 +43,12 @@ class WheelBalancer:
         wheel_radius: Wheel radius in [m].
     """
 
-    air_return_period: float
-    error: NDArray[float]
-    gains: BalancingGains
     ground_velocity: float
     integral_error_velocity: float
     max_ground_velocity: float
-    max_integral_error_velocity: float
     max_target_accel: float
-    max_target_distance: float
     max_target_velocity: float
-    pitch: float
-    target_ground_position: float
     target_ground_velocity: float
-    target_yaw_position: float
     target_yaw_velocity: float
     turning_deadband: float
     turning_decision_time: float
@@ -80,12 +57,8 @@ class WheelBalancer:
 
     def __init__(
         self,
-        air_return_period: float,
-        fall_pitch: float,
         max_ground_velocity: float,
-        max_integral_error_velocity: float,
         max_target_accel: float,
-        max_target_distance: float,
         max_target_velocity: float,
         max_yaw_accel: float,
         max_yaw_velocity: float,
@@ -97,17 +70,11 @@ class WheelBalancer:
         Initialize balancer.
 
         Args:
-            air_return_period: Cutoff period for resetting integrators while
-                the robot is in the air, in [s].
             max_ground_velocity: Maximum commanded ground velocity no matter
                 what, in [m] / [s].
-            max_integral_error_velocity: Maximum integral error velocity, in
-                [m] / [s].
             max_target_accel: Maximum acceleration for the ground target, in
                 [m] / [s]². This bound does not affect the commanded ground
                 velocity.
-            max_target_distance: Maximum distance from the current ground
-                position to the target, in [m].
             max_target_velocity: Maximum velocity for the ground target, in
                 [m] / [s]. This bound indirectly affects the commanded ground
                 velocity.
@@ -120,28 +87,117 @@ class WheelBalancer:
             wheel_radius Wheel: radius in [m].
         """
         assert 0.0 <= turning_deadband <= 1.0
-        self.air_return_period = air_return_period
-        self.error = np.zeros(2)
-        self.fall_pitch = fall_pitch
-        self.gains = BalancingGains()
-        self.ground_velocity = 0.0
         self.integral_error_velocity = 0.0
         self.max_ground_velocity = max_ground_velocity
-        self.max_integral_error_velocity = max_integral_error_velocity
         self.max_target_accel = max_target_accel
-        self.max_target_distance = max_target_distance
         self.max_target_velocity = max_target_velocity
         self.max_yaw_accel = max_yaw_accel
         self.max_yaw_velocity = max_yaw_velocity
-        self.pitch = 0.0
-        self.target_ground_position = 0.0
         self.target_ground_velocity = 0.0
-        self.target_yaw_position = 0.0
         self.target_yaw_velocity = 0.0
         self.turning_deadband = turning_deadband
         self.turning_decision_time = turning_decision_time
         self.turning_probability = 0.0
         self.wheel_radius = wheel_radius
+
+    @abc.abstractmethod
+    def compute_ground_velocity(self, observation: dict, dt: float) -> float:
+        """
+        Compute a new ground velocity.
+
+        Args:
+            observation: Latest observation.
+            dt: Time in [s] until next cycle.
+
+        Returns:
+            New ground velocity, in [m] / [s].
+        """
+
+    def log(self) -> dict:
+        """
+        Log internal state to a dictionary.
+
+        Returns:
+            Log data as a dictionary.
+        """
+        return {
+            "target_ground_velocity": self.target_ground_velocity,
+            "target_yaw_velocity": self.target_yaw_velocity,
+        }
+
+    def process_joystick_buttons(self, observation: dict) -> None:
+        """
+        Process joystick buttons.
+
+        Args:
+            observation: Latest observation.
+        """
+
+    def cycle(self, observation: dict, dt: float) -> None:
+        """
+        Compute a new ground velocity.
+
+        Args:
+            observation: Latest observation.
+            dt: Time in [s] until next cycle.
+
+        Returns:
+            New ground velocity, in [m] / [s].
+        """
+        self.process_joystick_buttons(observation)
+        self.update_target_ground_velocity(observation, dt)
+        self.update_target_yaw_velocity(observation, dt)
+
+        ground_velocity = self.compute_ground_velocity(observation, dt)
+        left_velocity, right_velocity = self.get_wheel_velocities(
+            ground_velocity,
+            observation["height_controller"]["position_right_in_left"],
+        )
+        servo_action = {
+            "left_wheel": {
+                "position": np.nan,
+                "velocity": left_velocity,
+            },
+            "right_wheel": {
+                "position": np.nan,
+                "velocity": right_velocity,
+            },
+        }
+        return {"servo": servo_action}
+
+    def get_wheel_velocities(
+        self,
+        ground_velocity: float,
+        position_right_in_left: NDArray[float],
+    ) -> Tuple[float, float]:
+        """
+        Get left and right wheel velocities.
+
+        Args:
+            position_right_in_left: Translation from the left contact frame
+                to the right contact frame, expressed in the left contact
+                frame. Equivalently, linear coordinates of the pose of the
+                right contact frame with respect to the left contact frame.
+
+        Returns:
+            Tuple with `left_wheel_velocity` (left wheel velocity in rad/s) and
+            `right_wheel_velocity` (right wheel velocity in rad/s).
+
+        Note:
+            For now we assume that the two wheels are parallel to the ground,
+            so that the rotation from one frame to the other is the identity.
+        """
+        # Sagittal translation
+        left_wheel_velocity: float = +ground_velocity / self.wheel_radius
+        right_wheel_velocity: float = -ground_velocity / self.wheel_radius
+
+        # Yaw rotation
+        contact_radius = 0.5 * np.linalg.norm(position_right_in_left)
+        yaw_to_wheel = contact_radius / self.wheel_radius
+        left_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
+        right_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
+
+        return left_wheel_velocity, right_wheel_velocity
 
     def update_target_ground_velocity(
         self, observation: dict, dt: float
@@ -218,184 +274,3 @@ class WheelBalancer:
         )
         if abs(self.target_yaw_velocity) > 0.01:  # still turning
             self.turning_probability = 1.0
-
-    def process_joystick_buttons(self, observation: dict) -> None:
-        ground_position = observation["wheel_odometry"]["position"]
-        try:
-            if observation["joystick"]["cross_button"]:
-                # When the user presses the reset button, we assume there is no
-                # contact for sure (or we are in a situation where spinning the
-                # wheels is dangerous?) and thus perform a hard rather than
-                # soft reset of both integrators.
-                self.integral_error_velocity = 0.0  # [m] / [s]
-                self.target_ground_position = ground_position
-        except KeyError:
-            pass
-
-    def cycle(self, observation: dict, dt: float) -> None:
-        """
-        Compute a new ground velocity.
-
-        Args:
-            observation: Latest observation.
-            dt: Time in [s] until next cycle.
-        """
-        self.process_joystick_buttons(observation)
-        self.update_target_ground_velocity(observation, dt)
-        self.update_target_yaw_velocity(observation, dt)
-
-        pitch = observation["base_orientation"]["pitch"]
-        self.pitch = pitch
-        if abs(pitch) > self.fall_pitch:
-            self.integral_error_velocity = 0.0  # [m] / [s]
-            self.ground_velocity = 0.0  # [m] / [s]
-            raise FallDetected(f"Base angle {pitch=:.3} rad denotes a fall")
-
-        ground_position = observation["wheel_odometry"]["position"]
-        floor_contact = observation["floor_contact"]["contact"]
-
-        target_pitch: float = 0.0  # [rad]
-        error = np.array(
-            [
-                self.target_ground_position - ground_position,
-                target_pitch - pitch,
-            ]
-        )
-        self.error = error
-
-        if not floor_contact:
-            self.integral_error_velocity = low_pass_filter(
-                self.integral_error_velocity, self.air_return_period, 0.0, dt
-            )
-            # We don't reset self.target_ground_velocity: either takeoff
-            # detection is a false positive and we should resume close to the
-            # pre-takeoff state, or the robot is really in the air and the user
-            # should stop smashing the joystick like a bittern ;p
-            self.target_ground_position = low_pass_filter(
-                self.target_ground_position,
-                self.air_return_period,
-                ground_position,
-                dt,
-            )
-        else:  # floor_contact:
-            ki = np.array(
-                [
-                    self.gains.position_stiffness,
-                    self.gains.pitch_stiffness,
-                ]
-            )
-            self.integral_error_velocity += ki.dot(error) * dt
-            self.integral_error_velocity = clamp_abs(
-                self.integral_error_velocity, self.max_integral_error_velocity
-            )
-            self.target_ground_position += self.target_ground_velocity * dt
-            self.target_ground_position = clamp(
-                self.target_ground_position,
-                ground_position - self.max_target_distance,
-                ground_position + self.max_target_distance,
-            )
-
-        kp = np.array(
-            [
-                self.gains.position_damping,
-                self.gains.pitch_damping,
-            ]
-        )
-
-        # Non-minimum phase trick: as per control theory's book, the proper
-        # feedforward velocity should be ``+self.target_ground_velocity``.
-        # However, it is with resolute purpose that it sends
-        # ``-self.target_ground_velocity`` instead!
-        #
-        # Try both on the robot, you will see the difference :)
-        #
-        # This hack is not purely out of "esprit de contradiction". Changing
-        # velocity is a non-minimum phase behavior (to accelerate forward, the
-        # ZMP of the LIPM needs to move backward at first, then forward), and
-        # our feedback can't realize that (it only takes care of balancing
-        # around a stationary velocity).
-        #
-        # What's left? Our integrator! If we send the opposite of the target
-        # velocity (or only a fraction of it, although 100% seems to do a good
-        # job), Upkie will immediately start executing the desired non-minimum
-        # phase behavior. The error will then grow and the integrator catch up
-        # so that ``upkie_trick_velocity - self.integral_error_velocity``
-        # converges to its proper steady state value (the same value ``0 -
-        # self.integral_error_velocity`` would have converged to if we had no
-        # feedforward).
-        #
-        # Unconvinced? Try it on the robot. You will feel Upkie's trick ;)
-        #
-        upkie_trick_velocity = -self.target_ground_velocity
-
-        self.ground_velocity = (
-            upkie_trick_velocity - kp.dot(error) - self.integral_error_velocity
-        )
-        self.ground_velocity = clamp_abs(
-            self.ground_velocity, self.max_ground_velocity
-        )
-
-        delta = observation["height_controller"]["position_right_in_left"]
-        left_velocity, right_velocity = self.get_wheel_velocities(delta)
-        servo_action = {
-            "left_wheel": {
-                "position": np.nan,
-                "velocity": left_velocity,
-            },
-            "right_wheel": {
-                "position": np.nan,
-                "velocity": right_velocity,
-            },
-        }
-        return {"servo": servo_action}
-
-    def get_wheel_velocities(
-        self,
-        position_right_in_left: NDArray[float],
-    ) -> Tuple[float, float]:
-        """
-        Get left and right wheel velocities.
-
-        Args:
-            position_right_in_left: Translation from the left contact frame
-                to the right contact frame, expressed in the left contact
-                frame. Equivalently, linear coordinates of the pose of the
-                right contact frame with respect to the left contact frame.
-
-        Returns:
-            Tuple with `left_wheel_velocity` (left wheel velocity in rad/s) and
-            `right_wheel_velocity` (right wheel velocity in rad/s).
-
-        Note:
-            For now we assume that the two wheels are parallel to the ground,
-            so that the rotation from one frame to the other is the identity.
-        """
-        # Sagittal translation
-        left_wheel_velocity: float = +self.ground_velocity / self.wheel_radius
-        right_wheel_velocity: float = -self.ground_velocity / self.wheel_radius
-
-        # Yaw rotation
-        contact_radius = 0.5 * np.linalg.norm(position_right_in_left)
-        yaw_to_wheel = contact_radius / self.wheel_radius
-        left_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
-        right_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
-
-        return left_wheel_velocity, right_wheel_velocity
-
-    def log(self) -> dict:
-        """
-        Log internal state to a dictionary.
-
-        Returns:
-            Log data as a dictionary.
-        """
-        return {
-            "error": self.error,
-            "gains": self.gains.__dict__,
-            "ground_velocity": self.ground_velocity,
-            "integral_error_velocity": self.integral_error_velocity,
-            "pitch": self.pitch,
-            "target_ground_position": self.target_ground_position,
-            "target_ground_velocity": self.target_ground_velocity,
-            "target_yaw_velocity": self.target_yaw_velocity,
-        }
