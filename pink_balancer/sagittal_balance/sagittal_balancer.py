@@ -11,13 +11,14 @@ import gin
 
 @gin.configurable
 class SagittalBalancer(abc.ABC):
+    """Base class for sagittal balancers."""
+
     def __init__(
         self,
         max_ground_accel: float,
         max_ground_velocity: float,
     ):
-        """
-        Initialize balancer.
+        """Initialize balancer.
 
         Args:
             max_ground_accel: Maximum commanded ground acceleration no matter
@@ -35,8 +36,7 @@ class SagittalBalancer(abc.ABC):
         observation: dict,
         dt: float,
     ) -> float:
-        """
-        Compute a new ground velocity.
+        """Compute a new ground velocity.
 
         Args:
             target_ground_velocity: Target ground velocity in [m] / [s].
@@ -49,8 +49,7 @@ class SagittalBalancer(abc.ABC):
 
     @abc.abstractmethod
     def log(self) -> dict:
-        """
-        Log internal state to a dictionary.
+        """Log internal state to a dictionary.
 
         Returns:
             Log data as a dictionary.

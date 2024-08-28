@@ -12,9 +12,19 @@ from qpmpc import MPCQP
 
 @gin.configurable
 class ProxQPWorkspace:
+    """Workspace data for ProxQP."""
+
     def __init__(
         self, mpc_qp: MPCQP, update_preconditioner: bool, verbose: bool
     ):
+        """Initialize the workspace.
+
+        Args:
+            mpc_qp: MPC problem.
+            update_preconditioner: If set, update preconditioners at each
+                solve.
+            verbose: If set, print out debug information.
+        """
         n_eq = 0
         n_in = mpc_qp.h.size // 2  # WheeledInvertedPendulum structure
         n = mpc_qp.P.shape[1]
@@ -41,6 +51,14 @@ class ProxQPWorkspace:
         self.solver = solver
 
     def solve(self, mpc_qp: MPCQP) -> qpsolvers.Solution:
+        """Solve a given MPC QP.
+
+        Args:
+            mpc_qp: Problem to solve.
+
+        Returns:
+            Solution found by the solver.
+        """
         self.solver.update(
             g=mpc_qp.q,
             update_preconditioner=self.update_preconditioner,

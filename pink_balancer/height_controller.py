@@ -6,6 +6,7 @@
 # Copyright 2023-2024 Inria
 
 import gin
+import meshcat_shapes
 import numpy as np
 import pink
 import pinocchio as pin
@@ -21,8 +22,7 @@ from upkie.utils.clamp import clamp
 def observe_configuration(
     observation, configuration, servo_layout
 ) -> NDArray[float]:
-    """
-    Compute configuration vector from a new observation.
+    """Compute configuration vector from a new observation.
 
     Args:
         observation: Observation dictionary.
@@ -42,8 +42,7 @@ def observe_configuration(
 
 
 def serialize_to_servo_action(configuration, velocity, servo_layout) -> dict:
-    """
-    Serialize robot state for the spine.
+    """Serialize robot state for the spine.
 
     Args:
         configuration: Robot configuration.
@@ -68,8 +67,11 @@ def serialize_to_servo_action(configuration, velocity, servo_layout) -> dict:
 
 
 def add_target_frames(visualizer):
-    import meshcat_shapes
+    """Add target frames for visualization.
 
+    Args:
+        visualizer: Meshcat viewer wrapper.
+    """
     viewer = visualizer.viewer
     meshcat_shapes.frame(viewer["left_contact_target"], opacity=0.5)
     meshcat_shapes.frame(viewer["right_contact_target"], opacity=0.5)
@@ -79,8 +81,7 @@ def add_target_frames(visualizer):
 
 @gin.configurable
 class HeightController:
-    """
-    Compute leg inverse kinematics.
+    """Compute leg inverse kinematics.
 
     Attributes:
         max_crouch_height: Maximum distance along the vertical axis that the
@@ -110,13 +111,16 @@ class HeightController:
         max_lean_velocity: float,
         visualize: bool,
     ):
-        """
-        Create controller.
+        """Create controller.
 
         Args:
             max_crouch_height: Maximum distance along the vertical axis that
                 the robot goes down while crouching, in [m].
             max_crouch_velocity: Maximum vertical velocity in [m] / [s].
+            max_height_difference: Maximum height difference between the two
+                wheel contact points, in [m].
+            max_lean_velocity: Maximum leaning (to the side) velocity, in [m] /
+                [s].
             visualize: If true, open a MeshCat visualizer on the side.
         """
         robot = upkie_description.load_in_pinocchio(root_joint=None)
@@ -187,7 +191,9 @@ class HeightController:
         self.max_lean_velocity = max_lean_velocity
         self.robot = robot
         self.servo_layout = servo_layout
-        self.target_position_wheel_in_rest = {k: np.zeros(3) for k in ("left_contact", "right_contact")}
+        self.target_position_wheel_in_rest = {
+            k: np.zeros(3) for k in ("left_contact", "right_contact")
+        }
         self.target_offset = {
             "left_contact": np.zeros(3),
             "right_contact": np.zeros(3),
@@ -202,8 +208,7 @@ class HeightController:
     def get_next_height_from_joystick(
         self, observation: dict, dt: float
     ) -> float:
-        """
-        Update target base height from joystick inputs.
+        """Update target base height from joystick inputs.
 
         Args:
             observation: Observation from the spine.
@@ -223,10 +228,9 @@ class HeightController:
         return height
 
     def get_next_height_difference_from_joystick(
-            self, observation: dict, dt: float
+        self, observation: dict, dt: float
     ):
-        """
-        Update the height difference from joystick inputs.
+        """Update the height difference from joystick inputs.
 
         Args:
             observation: Observation from the spine.
@@ -245,8 +249,7 @@ class HeightController:
         return delta
 
     def update_target_height(self, observation: dict, dt: float) -> None:
-        """
-        Update target base height from joystick inputs.
+        """Update target base height from joystick inputs.
 
         Args:
             observation: Observation from the spine.
@@ -254,29 +257,32 @@ class HeightController:
         """
         height = self.get_next_height_from_joystick(observation, dt)
 
-        self.target_height = clamp(
-            height, 0, self.max_crouch_height
-        )
+        self.target_height = clamp(height, 0, self.max_crouch_height)
 
-        height_difference = self.get_next_height_difference_from_joystick(observation, dt)
+        height_difference = self.get_next_height_difference_from_joystick(
+            observation, dt
+        )
         self.height_difference = clamp(
             height_difference,
-            -self.max_height_difference, self.max_height_difference
+            -self.max_height_difference,
+            self.max_height_difference,
         )
 
-        for wheel in ('left_contact', 'right_contact'):
-            offset = self.height_difference if wheel == 'right_contact' else -self.height_difference
+        for wheel in ("left_contact", "right_contact"):
+            offset = (
+                self.height_difference
+                if wheel == "right_contact"
+                else -self.height_difference
+            )
             offset /= 2
 
-            # Clamp target heights
+            # Clamp target heights
             self.target_position_wheel_in_rest[wheel][2] = clamp(
-                self.target_height + offset,
-                0.0, self.max_crouch_height
+                self.target_height + offset, 0.0, self.max_crouch_height
             )
 
     def update_ik_targets(self, observation: dict, dt: float) -> None:
-        """
-        Update IK frame targets from individual target positions.
+        """Update IK frame targets from individual target positions.
 
         Args:
             observation: Observation from the spine.
@@ -299,8 +305,7 @@ class HeightController:
             self.tasks[target].set_target(transform_target_to_world)
 
     def _process_first_observation(self, observation: dict) -> None:
-        """
-        Function called at the first iteration of the controller.
+        """Function called at the first iteration of the controller.
 
         Args:
             observation: Observation from the spine.
@@ -345,8 +350,7 @@ class HeightController:
             )
 
     def log(self) -> dict:
-        """
-        Log internal state to a dictionary.
+        """Log internal state to a dictionary.
 
         Returns:
             Log data as a dictionary.
@@ -359,8 +363,7 @@ class HeightController:
         }
 
     def cycle(self, observation: dict, dt: float) -> dict:
-        """
-        Compute action for a new cycle.
+        """Compute action for a new cycle.
 
         Args:
             observation: Latest observation.

@@ -7,6 +7,8 @@
 
 """Control wheels to track ground and yaw velocity targets."""
 
+from typing import Literal
+
 import gin
 import numpy as np
 from upkie.utils.clamp import clamp_abs
@@ -17,8 +19,7 @@ from .sagittal_balance import MPCBalancer, PIBalancer, SagittalBalancer
 
 @gin.configurable
 class WheelController:
-    """
-    Base class for wheel balancers.
+    """Base class for wheel balancers.
 
     Attributes:
         ground_velocity: Sagittal velocity in [m] / [s].
@@ -62,8 +63,7 @@ class WheelController:
         turning_decision_time: float,
         wheel_radius: float,
     ):
-        """
-        Initialize balancer.
+        """Initialize balancer.
 
         Args:
             balancer_class: String indicating the SagittalBalancer class to
@@ -80,7 +80,7 @@ class WheelController:
                 which legs stiffen but the turning motion doesn't start.
             turning_decision_time: Minimum duration in [s] for the turning
                 probability to switch from zero to one and converesly.
-            wheel_radius Wheel: radius in [m].
+            wheel_radius: Wheel radius in [m].
         """
         assert 0.0 <= turning_deadband <= 1.0
         sagittal_balancer = (
@@ -99,8 +99,7 @@ class WheelController:
         self.wheel_radius = wheel_radius
 
     def log(self) -> dict:
-        """
-        Log internal state to a dictionary.
+        """Log internal state to a dictionary.
 
         Returns:
             Log data as a dictionary.
@@ -115,8 +114,7 @@ class WheelController:
         return log_dict
 
     def cycle(self, observation: dict, dt: float) -> dict:
-        """
-        Compute a new ground velocity.
+        """Compute a new ground velocity.
 
         Args:
             observation: Latest observation.
@@ -158,8 +156,7 @@ class WheelController:
     def update_target_ground_velocity(
         self, observation: dict, dt: float
     ) -> None:
-        """
-        Update target ground velocity from joystick input.
+        """Update target ground velocity from joystick input.
 
         Args:
             observation: Latest observation.
@@ -189,8 +186,7 @@ class WheelController:
         )
 
     def update_target_yaw_velocity(self, observation: dict, dt: float) -> None:
-        """
-        Update target yaw velocity from joystick input.
+        """Update target yaw velocity from joystick input.
 
         Args:
             observation: Latest observation.

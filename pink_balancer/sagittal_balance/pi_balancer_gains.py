@@ -10,6 +10,8 @@ import gin
 
 @gin.configurable
 class PIBalancerGains:
+    """PI balancer gains."""
+
     pitch_damping: float
     pitch_stiffness: float
     position_damping: float
@@ -22,6 +24,14 @@ class PIBalancerGains:
         position_damping: float,
         position_stiffness: float,
     ):
+        """Initialize a new set of gains.
+
+        Args:
+            pitch_damping: Pitch damping gain.
+            pitch_stiffness: Pitch stiffness gain.
+            position_damping: Position damping gain.
+            position_stiffness: Position stiffness gain.
+        """
         self.pitch_damping = pitch_damping
         self.pitch_stiffness = pitch_stiffness
         self.position_damping = position_damping
@@ -34,8 +44,7 @@ class PIBalancerGains:
         position_damping: float,
         position_stiffness: float,
     ) -> None:
-        """
-        Set gains in one function call.
+        """Set gains in one function call.
 
         Args:
             pitch_damping: Pitch error (normalized) damping gain.
@@ -61,6 +70,7 @@ class PIBalancerGains:
         self.position_stiffness = position_stiffness
 
     def __repr__(self):
+        """Descriptive string representation."""
         return (
             "PIBalancerGains("
             f"pitch_damping={self.pitch_damping}, "

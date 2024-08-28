@@ -1,0 +1,29 @@
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = [
+    # pyflakes
+    "F",
+    # pycodestyle
+    "E",
+    "W",
+    # isort
+    "I001",
+    # pydocstyle
+    "D"
+]
+ignore = [
+    "D100",  # we use ## Doxygen comments: https://stackoverflow.com/q/71380065
+    "D104",  # we use ## Doxygen comments: https://stackoverflow.com/q/71380065
+    "D204",  # ruff does not know we use Doxygen docstrings
+    "D205",  # ruff does not know we use Doxygen docstrings
+    "D401",  # good for methods but not for class docstrings
+    "D405",  # British-style section names are also "proper"!
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
