@@ -114,7 +114,7 @@ class WheelController:
         )
         return log_dict
 
-    def cycle(self, observation: dict, dt: float) -> None:
+    def cycle(self, observation: dict, dt: float) -> dict:
         """
         Compute a new ground velocity.
 
