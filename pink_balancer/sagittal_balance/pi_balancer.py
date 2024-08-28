@@ -17,9 +17,10 @@ from .sagittal_balancer import SagittalBalancer
 
 @gin.configurable
 class PIBalancer(SagittalBalancer):
-    """
-    Balancing by proportional-integrative feedback of the base pitch error and
-    ground position error to wheel velocities.
+    """Balancing by proportional-integrative feedback.
+
+    Feedback is applied to the base pitch error and ground position error to
+    wheel velocities.
 
     Attributes:
         air_return_period: Cutoff period for resetting integrators while the
@@ -47,12 +48,12 @@ class PIBalancer(SagittalBalancer):
         max_integral_error_velocity: float,
         max_target_distance: float,
     ):
-        """
-        Initialize balancer.
+        """Initialize balancer.
 
         Args:
             air_return_period: Cutoff period for resetting integrators while
                 the robot is in the air, in [s].
+            fall_pitch: Fall pitch threshold, in radians.
             max_integral_error_velocity: Maximum integral error velocity, in
                 [m] / [s].
             max_target_distance: Maximum distance from the current ground
@@ -69,8 +70,7 @@ class PIBalancer(SagittalBalancer):
         self.target_ground_position = 0.0
 
     def process_joystick_buttons(self, observation: dict) -> None:
-        """
-        Process joystick buttons.
+        """Process joystick buttons.
 
         Args:
             observation: Latest observation.
@@ -94,8 +94,7 @@ class PIBalancer(SagittalBalancer):
         observation: dict,
         dt: float,
     ) -> float:
-        """
-        Compute a new ground velocity.
+        """Compute a new ground velocity.
 
         Args:
             target_ground_velocity: Target ground velocity in [m] / [s].
@@ -197,8 +196,7 @@ class PIBalancer(SagittalBalancer):
         return self.commanded_velocity
 
     def log(self) -> dict:
-        """
-        Log internal state to a dictionary.
+        """Log internal state to a dictionary.
 
         Returns:
             Log data as a dictionary.

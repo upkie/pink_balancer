@@ -21,6 +21,8 @@ from .sagittal_balancer import SagittalBalancer
 
 @gin.configurable
 class MPCBalancer(SagittalBalancer):
+    """Model-predictive control sagittal balancer."""
+
     def __init__(
         self,
         leg_length: float,
@@ -31,11 +33,12 @@ class MPCBalancer(SagittalBalancer):
         terminal_cost_weight: float,
         warm_start: bool,
     ):
-        """
-        Initialize balancer.
+        """Initialize balancer.
 
         Args:
             leg_length: Leg length in [m].
+            nb_timesteps: Number of MPC steps.
+            sampling_period: Duration of an MPC step in seconds.
             stage_input_cost_weight: Weight for the stage input cost.
             stage_state_cost_weight: Weight for the stage state cost.
             terminal_cost_weight: Weight for the terminal cost.
@@ -70,8 +73,7 @@ class MPCBalancer(SagittalBalancer):
         observation: dict,
         dt: float,
     ) -> float:
-        """
-        Compute a new ground velocity.
+        """Compute a new ground velocity.
 
         Args:
             target_ground_velocity: Target ground velocity in [m] / [s].
@@ -134,8 +136,7 @@ class MPCBalancer(SagittalBalancer):
         return self.commanded_velocity
 
     def log(self) -> dict:
-        """
-        Log internal state to a dictionary.
+        """Log internal state to a dictionary.
 
         Returns:
             Log data as a dictionary.

@@ -14,8 +14,7 @@ from .wheel_controller import WheelController
 
 @gin.configurable
 class WholeBodyController:
-    """
-    Coordinate leg inverse kinematics and wheel balancing.
+    """Coordinate leg inverse kinematics and wheel balancing.
 
     Attributes:
         gain_scale: PD gain scale for hip and knee joints.
@@ -29,8 +28,7 @@ class WholeBodyController:
     def __init__(
         self, gain_scale: float, turning_gain_scale: float, visualize: bool
     ):
-        """
-        Create controller.
+        """Create controller.
 
         Args:
             gain_scale: PD gain scale for hip and knee joints.
@@ -45,8 +43,7 @@ class WholeBodyController:
         self.wheel_controller = WheelController()
 
     def cycle(self, observation: dict, dt: float) -> dict:
-        """
-        Compute action for a new cycle.
+        """Compute action for a new cycle.
 
         Args:
             observation: Latest observation.
