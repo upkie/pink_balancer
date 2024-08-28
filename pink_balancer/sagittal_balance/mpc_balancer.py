@@ -19,6 +19,30 @@ from .proxqp_workspace import ProxQPWorkspace
 from .sagittal_balancer import SagittalBalancer
 
 
+def get_target_states(
+    pendulum: WheeledInvertedPendulum,
+    state: np.ndarray,
+    target_ground_velocity: float,
+):
+    """Define the reference state trajectory over the receding horizon.
+
+    Args:
+        pendulum: Wheeled inverted pendulum model.
+        state: Initial state of the pendulum at the beginning of the horizon.
+        target_ground_velocity: Target ground velocity in [m] / [s].
+
+    Returns:
+        Goal state at the end of the horizon.
+    """
+    nx = pendulum.STATE_DIM
+    T = pendulum.sampling_period
+    target_states = np.zeros((pendulum.nb_timesteps + 1) * nx)
+    for k in range(pendulum.nb_timesteps + 1):
+        target_states[k * nx] = state[0] + (k * T) * target_ground_velocity
+        target_states[k * nx + 2] = target_ground_velocity
+    return target_states
+
+
 @gin.configurable
 class MPCBalancer(SagittalBalancer):
     """Model-predictive control sagittal balancer."""
@@ -90,7 +114,8 @@ class MPCBalancer(SagittalBalancer):
         ground_position = observation["wheel_odometry"]["position"]
         ground_velocity = observation["wheel_odometry"]["velocity"]
 
-        initial_state = np.array(
+        # NB: state structure comes from WheeledInvertedPendulum
+        cur_state = np.array(
             [
                 ground_position,
                 base_pitch,
@@ -99,9 +124,11 @@ class MPCBalancer(SagittalBalancer):
             ]
         )
 
-        nx = WheeledInvertedPendulum.STATE_DIM
-        target_states = np.zeros((self.pendulum.nb_timesteps + 1) * nx)
-        self.mpc_problem.update_initial_state(initial_state)
+        nx = self.pendulum.STATE_DIM
+        target_states = get_target_states(
+            self.pendulum, cur_state, target_ground_velocity
+        )
+        self.mpc_problem.update_initial_state(cur_state)
         self.mpc_problem.update_goal_state(target_states[-nx:])
         self.mpc_problem.update_target_states(target_states[:-nx])
 
@@ -125,7 +152,7 @@ class MPCBalancer(SagittalBalancer):
             logging.error("Solver found no solution to the MPC problem")
             logging.info("Re-sending previous ground velocity")
         else:  # plan was found
-            self.pendulum.state = initial_state
+            self.pendulum.state = cur_state
             commanded_accel = plan.first_input[0]
             self.commanded_velocity = clamp_and_warn(
                 self.commanded_velocity + commanded_accel * dt / 2.0,
