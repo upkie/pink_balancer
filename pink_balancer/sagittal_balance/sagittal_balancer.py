@@ -15,17 +15,20 @@ class SagittalBalancer(abc.ABC):
 
     def __init__(
         self,
+        fall_pitch: float,
         max_ground_accel: float,
         max_ground_velocity: float,
     ):
         """Initialize balancer.
 
         Args:
+            fall_pitch: Fall pitch threshold, in radians.
             max_ground_accel: Maximum commanded ground acceleration no matter
                 what, in [m] / [s]².
             max_ground_velocity: Maximum commanded ground velocity no matter
                 what, in [m] / [s].
         """
+        self.fall_pitch = fall_pitch
         self.max_ground_accel = max_ground_accel
         self.max_ground_velocity = max_ground_velocity
 
