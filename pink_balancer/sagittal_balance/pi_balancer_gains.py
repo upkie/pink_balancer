@@ -9,7 +9,7 @@ import gin
 
 
 @gin.configurable
-class BalancingGains:
+class PIBalancerGains:
     pitch_damping: float
     pitch_stiffness: float
     position_damping: float
@@ -62,7 +62,7 @@ class BalancingGains:
 
     def __repr__(self):
         return (
-            "BalancingGains("
+            "PIBalancerGains("
             f"pitch_damping={self.pitch_damping}, "
             f"pitch_stiffness={self.pitch_stiffness}, "
             f"position_damping={self.position_damping}, "

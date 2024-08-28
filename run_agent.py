@@ -91,7 +91,7 @@ if __name__ == "__main__":
     spine = SpineInterface(retries=10)
     controller = WholeBodyController(visualize=args.visualize)
     spine_config = upkie.config.SPINE_CONFIG.copy()
-    wheel_radius = controller.wheel_balancer.wheel_radius
+    wheel_radius = controller.wheel_controller.wheel_radius
     wheel_odometry_config = spine_config["wheel_odometry"]
     wheel_odometry_config["signed_radius"]["left_wheel"] = +wheel_radius
     wheel_odometry_config["signed_radius"]["right_wheel"] = -wheel_radius
