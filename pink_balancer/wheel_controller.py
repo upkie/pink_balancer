@@ -66,6 +66,8 @@ class WheelController:
         Initialize balancer.
 
         Args:
+            balancer_class: String indicating the SagittalBalancer class to
+                instantiate.
             max_target_accel: Maximum acceleration for the ground target, in
                 [m] / [s]². This bound does not affect the commanded ground
                 velocity.
