@@ -24,7 +24,7 @@ jobs:
                   ruff check pink_balancer
 
     ci_success:
-        name: "CIsuccess"
+        name: "CI success"
         runs-on: ubuntu-latest
         needs: [lint]
         steps:
