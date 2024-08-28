@@ -21,8 +21,7 @@ from pink_balancer import WholeBodyController
 
 
 def parse_command_line_arguments() -> argparse.Namespace:
-    """
-    Parse command line arguments.
+    """Parse command line arguments.
 
     Returns:
         Command-line arguments.
@@ -50,8 +49,7 @@ def run(
     controller: WholeBodyController,
     frequency: float = 200.0,
 ) -> None:
-    """
-    Read observations and send actions to the spine.
+    """Read observations and send actions to the spine.
 
     Args:
         spine: Interface to the spine.
