@@ -11,13 +11,37 @@ import traceback
 from pathlib import Path
 
 import gin
-import upkie.config
+import yaml
+
 from loop_rate_limiters import RateLimiter
 from upkie.spine import SpineInterface
 from upkie.utils.raspi import configure_agent_process, on_raspi
 from upkie.utils.spdlog import logging
+from upkie.exceptions import FallDetected
 
 from pink_balancer import WholeBodyController
+
+
+def get_vertical_force(
+    step: int,
+    start: int = 200,
+    lift_steps: int = 200,
+    delta: float = 0.1,
+    hold_steps: int = 400,
+) -> float:
+    lift: float = 0.0  # 0 = no force, 1 => apply -mg
+    if step < start:
+        lift = 0.0
+    elif step - start < lift_steps // 2:
+        lift = 1.0 + delta
+    elif step - start < lift_steps:
+        lift = 1.0 - delta
+    elif step - start - lift_steps < hold_steps:
+        lift = 1.0
+    else:
+        lift = 0.0
+    mass = 5.34  # approximative, in [kg]
+    return lift * mass * 9.81  # in [N]
 
 
 def parse_command_line_arguments() -> argparse.Namespace:
@@ -40,6 +64,12 @@ def parse_command_line_arguments() -> argparse.Namespace:
         default=False,
         action="store_true",
     )
+    parser.add_argument(
+        "--levitate",
+        help="Levitate the robot by applying a vertical force",
+        default=False,
+        action="store_true",
+    )
     return parser.parse_args()
 
 
@@ -48,6 +78,7 @@ def run(
     spine_config: dict,
     controller: WholeBodyController,
     frequency: float = 200.0,
+    levitate: bool = False,
 ) -> None:
     """Read observations and send actions to the spine.
 
@@ -60,12 +91,36 @@ def run(
     dt = 1.0 / frequency
     rate = RateLimiter(frequency, "controller")
 
+    if levitate:
+        torso_force_in_world = [0.0, 0.0, 0.0]
+        bullet_action = {
+            "external_forces": {
+                "torso": {
+                    "force": torso_force_in_world,
+                    "local": False,
+                }
+            }
+        }
+
     spine.start(spine_config)
+
+    step: int = 0
     observation = spine.get_observation()  # pre-reset observation
+    
     while True:
         observation = spine.get_observation()
+
+        if step % 1000 and levitate:
+            observation["joystick"] = {"cross_button": True} # trigger reset
+
         action = controller.cycle(observation, dt)
+
+        if levitate:
+            torso_force_in_world[2] = get_vertical_force(step % 1000)
+            action["bullet"] = bullet_action
+        
         spine.set_action(action)
+        step += 1
         rate.sleep()
 
 
@@ -86,22 +141,34 @@ if __name__ == "__main__":
     if on_raspi():
         configure_agent_process()
 
-    spine = SpineInterface(retries=10)
+    with open(config_dir / "spine.yaml", "r") as file:
+        spine_config = yaml.safe_load(file)
+
     controller = WholeBodyController(visualize=args.visualize)
-    spine_config = upkie.config.SPINE_CONFIG.copy()
     wheel_radius = controller.wheel_controller.wheel_radius
     wheel_odometry_config = spine_config["wheel_odometry"]
     wheel_odometry_config["signed_radius"]["left_wheel"] = +wheel_radius
     wheel_odometry_config["signed_radius"]["right_wheel"] = -wheel_radius
-    try:
-        run(spine, spine_config, controller)
-    except KeyboardInterrupt:
-        logging.info("Caught a keyboard interrupt")
-    except Exception:
-        logging.error("Controller raised an exception")
-        print("")
-        traceback.print_exc()
-        print("")
+    spine = SpineInterface(retries=10)
+
+    keep_trying = True
+    while keep_trying:
+        keep_trying = False
+        try:
+            run(spine, spine_config, controller, levitate=args.levitate)
+        except KeyboardInterrupt:
+            logging.info("Caught a keyboard interrupt")
+        except FallDetected:
+            logging.error("Fall detected, resetting the spine!")
+            spine.stop()
+            controller = WholeBodyController(visualize=args.visualize)
+            spine = SpineInterface(retries=10)
+            keep_trying = True
+        except Exception:
+            logging.error("Controller raised an exception!")
+            print("")
+            traceback.print_exc()
+            print("")
 
     logging.info("Stopping the spine...")
     try:
