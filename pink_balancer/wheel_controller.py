@@ -53,7 +53,7 @@ class WheelController:
 
     def __init__(
         self,
-        balancer_class: str,
+        balancer_class: Literal["MPCBalancer", "PIBalancer"],
         max_target_accel: float,
         max_target_velocity: float,
         max_yaw_accel: float,
