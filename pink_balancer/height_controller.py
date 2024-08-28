@@ -100,8 +100,8 @@ class HeightController:
     transform_rest_to_world: dict
     max_height_difference: float
     max_lean_velocity: float
-    target_height: float = 0
-    height_difference: float = 0
+    target_height: float = 0.0
+    height_difference: float = 0.0
 
     def __init__(
         self,
@@ -173,7 +173,7 @@ class HeightController:
             ),
         }
         tasks["posture"].set_target(
-            custom_configuration_vector(robot, left_knee=0.2, right_knee=-0.2)
+            custom_configuration_vector(robot, left_knee=-0.2, right_knee=0.2)
         )
 
         visualizer = None
@@ -257,7 +257,9 @@ class HeightController:
         """
         height = self.get_next_height_from_joystick(observation, dt)
 
-        self.target_height = clamp(height, 0, self.max_crouch_height)
+        self.target_height = clamp(
+            height, 0.0, self.max_crouch_height
+        )
 
         height_difference = self.get_next_height_difference_from_joystick(
             observation, dt
