@@ -11,7 +11,6 @@ import numpy as np
 from qpmpc import MPCQP, Plan
 from qpmpc.systems import WheeledInvertedPendulum
 from qpsolvers import solve_problem
-
 from upkie.exceptions import FallDetected
 from upkie.utils.clamp import clamp_and_warn
 from upkie.utils.filters import low_pass_filter
@@ -117,7 +116,8 @@ class MPCBalancer(SagittalBalancer):
         ground_velocity = observation["wheel_odometry"]["velocity"]
 
         if abs(base_pitch) > self.fall_pitch:
-            raise FallDetected(f"Base angle {base_pitch=:.3} rad denotes a fall")
+            raise FallDetected(
+                    f"Base angle {base_pitch=:.3} rad denotes a fall")
 
         # NB: state structure comes from WheeledInvertedPendulum
         cur_state = np.array(
