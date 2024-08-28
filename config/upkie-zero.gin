@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import whole_body_controller
-
 # Pitch gains: 2 is roughly the good damping value for a stiffness of 15; 1 is
 # too low, resulting in oscillations of increasing magnitude; 3 is too high,
 # resulting in permanent small oscillations as the robot rolls around.

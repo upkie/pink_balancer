@@ -156,8 +156,8 @@ class MPCBalancer(SagittalBalancer):
             commanded_accel = plan.first_input[0]
             self.commanded_velocity = clamp_and_warn(
                 self.commanded_velocity + commanded_accel * dt / 2.0,
-                lower=-1.0,
-                upper=+1.0,
+                lower=-self.max_ground_velocity,
+                upper=+self.max_ground_velocity,
                 label="commanded_velocity",
             )
         return self.commanded_velocity
