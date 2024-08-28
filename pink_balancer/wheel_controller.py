@@ -11,9 +11,9 @@ from typing import Literal
 
 import gin
 import numpy as np
-from upkie.utils.clamp import clamp_abs
 from upkie.utils.filters import abs_bounded_derivative_filter
 
+from .remote_control import RemoteControl
 from .sagittal_balance import MPCBalancer, PIBalancer, SagittalBalancer
 
 
@@ -22,13 +22,7 @@ class WheelController:
     """Base class for wheel balancers.
 
     Attributes:
-        ground_velocity: Sagittal velocity in [m] / [s].
-        integral_error_velocity: Integral term contributing to the sagittal
-            velocity, in [m] / [s].
-        max_target_accel: Maximum acceleration for the ground target, in
-            [m] / [s]². Does not affect the commanded ground velocity.
-        max_target_velocity: Maximum velocity for the ground target, in
-            [m] / [s]. Indirectly affects the commanded ground velocity.
+        sagittal_balancer: Internal controller for sagittal balance.
         target_ground_velocity: Target ground sagittal velocity in [m] / [s].
         target_yaw_velocity: Target yaw velocity in [rad] / [s].
         turning_deadband: Joystick axis value between 0.0 and 1.0 below which
@@ -40,10 +34,6 @@ class WheelController:
         wheel_radius: Wheel radius in [m].
     """
 
-    ground_velocity: float
-    integral_error_velocity: float
-    max_target_accel: float
-    max_target_velocity: float
     sagittal_balancer: SagittalBalancer
     target_ground_velocity: float
     target_yaw_velocity: float
@@ -55,10 +45,6 @@ class WheelController:
     def __init__(
         self,
         balancer_class: Literal["MPCBalancer", "PIBalancer"],
-        max_target_accel: float,
-        max_target_velocity: float,
-        max_yaw_accel: float,
-        max_yaw_velocity: float,
         turning_deadband: float,
         turning_decision_time: float,
         wheel_radius: float,
@@ -68,14 +54,6 @@ class WheelController:
         Args:
             balancer_class: String indicating the SagittalBalancer class to
                 instantiate.
-            max_target_accel: Maximum acceleration for the ground target, in
-                [m] / [s]². This bound does not affect the commanded ground
-                velocity.
-            max_target_velocity: Maximum velocity for the ground target, in
-                [m] / [s]. This bound indirectly affects the commanded ground
-                velocity.
-            max_yaw_accel: Maximum yaw angular acceleration in [rad] / [s]².
-            max_yaw_velocity: Maximum yaw angular velocity in [rad] / [s].
             turning_deadband: Joystick axis value between 0.0 and 1.0 below
                 which legs stiffen but the turning motion doesn't start.
             turning_decision_time: Minimum duration in [s] for the turning
@@ -86,10 +64,7 @@ class WheelController:
         sagittal_balancer = (
             MPCBalancer() if balancer_class == "MPCBalancer" else PIBalancer()
         )
-        self.max_target_accel = max_target_accel
-        self.max_target_velocity = max_target_velocity
-        self.max_yaw_accel = max_yaw_accel
-        self.max_yaw_velocity = max_yaw_velocity
+        self.remote_control = RemoteControl()
         self.sagittal_balancer = sagittal_balancer
         self.target_ground_velocity = 0.0
         self.target_yaw_velocity = 0.0
@@ -181,8 +156,8 @@ class WheelController:
             self.target_ground_velocity,
             unfiltered_velocity,
             dt,
-            self.max_target_velocity,
-            self.max_target_accel,
+            self.remote_control.max_linear_velocity,
+            self.remote_control.max_linear_accel,
         )
 
     def update_target_yaw_velocity(self, observation: dict, dt: float) -> None:
@@ -212,7 +187,8 @@ class WheelController:
             1.0 - self.turning_deadband
         )
         velocity_ratio = max(0.0, velocity_ratio)
-        velocity = self.max_yaw_velocity * joystick_sign * velocity_ratio
+        max_yaw_velocity = self.remote_control.max_yaw_velocity
+        velocity = max_yaw_velocity * joystick_sign * velocity_ratio
         turn_hasnt_started = abs(self.target_yaw_velocity) < 0.01
         turn_not_sure_yet = self.turning_probability < 0.99
         if turn_hasnt_started and turn_not_sure_yet:
@@ -221,8 +197,8 @@ class WheelController:
             self.target_yaw_velocity,
             velocity,
             dt,
-            self.max_yaw_velocity,
-            self.max_yaw_accel,
+            self.remote_control.max_yaw_velocity,
+            self.remote_control.max_yaw_accel,
         )
         if abs(self.target_yaw_velocity) > 0.01:  # still turning
             self.turning_probability = 1.0

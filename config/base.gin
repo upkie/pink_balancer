@@ -29,14 +29,15 @@ PIBalancer.max_target_distance = 1.0                 # [m]
 ProxQPWorkspace.update_preconditioner = True
 ProxQPWorkspace.verbose = False
 
+RemoteControl.max_linear_accel = 0.8                 # [m] / [s]²
+RemoteControl.max_linear_velocity = 0.5              # [m] / [s]
+RemoteControl.max_yaw_accel = 10.0                   # [rad] / [s]²
+RemoteControl.max_yaw_velocity = 1.0                 # [rad] / [s]
+
 SagittalBalancer.max_ground_accel = 10.0             # [m] / [s]²
 SagittalBalancer.max_ground_velocity = 1.0           # [m] / [s]
 
 WheelController.balancer_class = "MPCBalancer"
-WheelController.max_target_accel = 0.3               # [m] / [s]²
-WheelController.max_target_velocity = 0.6            # [m] / [s]
-WheelController.max_yaw_accel = 10.0                 # [rad] / [s]²
-WheelController.max_yaw_velocity = 1.0               # [rad] / [s]
 WheelController.turning_deadband = 0.3
 WheelController.turning_decision_time = 0.2          # [s]
 WheelController.wheel_radius = 0.06                  # [m]
