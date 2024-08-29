@@ -44,7 +44,6 @@ class PIBalancer(SagittalBalancer):
     def __init__(
         self,
         air_return_period: float,
-        fall_pitch: float,
         max_integral_error_velocity: float,
         max_target_distance: float,
     ):
@@ -53,7 +52,6 @@ class PIBalancer(SagittalBalancer):
         Args:
             air_return_period: Cutoff period for resetting integrators while
                 the robot is in the air, in [s].
-            fall_pitch: Fall pitch threshold, in radians.
             max_integral_error_velocity: Maximum integral error velocity, in
                 [m] / [s].
             max_target_distance: Maximum distance from the current ground
@@ -62,7 +60,6 @@ class PIBalancer(SagittalBalancer):
         super().__init__()
         self.air_return_period = air_return_period
         self.error = np.zeros(2)
-        self.fall_pitch = fall_pitch
         self.gains = PIBalancerGains()
         self.integral_error_velocity = 0.0
         self.max_integral_error_velocity = max_integral_error_velocity

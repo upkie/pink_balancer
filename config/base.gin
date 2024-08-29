@@ -22,7 +22,6 @@ MPCBalancer.terminal_cost_weight = 1.0
 MPCBalancer.warm_start = True
 
 PIBalancer.air_return_period = 1.0                   # [s]
-PIBalancer.fall_pitch = 1.0                          # [rad]
 PIBalancer.max_integral_error_velocity = 10.0        # [m] / [s]
 PIBalancer.max_target_distance = 1.0                 # [m]
 
@@ -34,6 +33,7 @@ RemoteControl.max_linear_velocity = 0.5              # [m] / [s]
 RemoteControl.max_yaw_accel = 10.0                   # [rad] / [s]²
 RemoteControl.max_yaw_velocity = 1.0                 # [rad] / [s]
 
+SagittalBalancer.fall_pitch = 1.0                    # [rad]
 SagittalBalancer.max_ground_accel = 10.0             # [m] / [s]²
 SagittalBalancer.max_ground_velocity = 1.0           # [m] / [s]
 
