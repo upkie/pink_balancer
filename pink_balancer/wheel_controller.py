@@ -149,7 +149,7 @@ class WheelController:
             axis_value = observation["joystick"]["left_axis"][1]
             trigger_value = observation["joystick"]["right_trigger"]  # -1 to 1
             boost_value = clamp_abs(0.5 * (trigger_value + 1.0), 1.0)  # 0 to 1
-            max_velocity = 0.5 * (1.0 + boost_value) * self.max_target_velocity
+            max_velocity = 0.5 * (1.0 + boost_value) * self.remote_control.max_linear_velocity
             unfiltered_velocity = -max_velocity * axis_value
         except KeyError:
             unfiltered_velocity = 0.0
