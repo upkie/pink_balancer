@@ -7,7 +7,7 @@
 # UPKIE_NAME=foo``
 REMOTE = ${UPKIE_NAME}
 
-CURDATE = $(shell date --iso=seconds)
+CURDATE = $(shell date -Iseconds)
 CURDIR_NAME = $(shell basename $(CURDIR))
 
 # Help snippet adapted from:
