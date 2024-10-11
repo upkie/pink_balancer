@@ -6,6 +6,7 @@ PROJECT_NAME = pink_balancer
 
 CURDATE = $(shell date -Iseconds)
 CURDIR_NAME = $(shell basename $(CURDIR))
+CONDA_ENV_FILE = conda_env.tar.gz
 
 # Help snippet adapted from:
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
@@ -41,33 +42,25 @@ upload: check_upkie_name ## upload built targets to the Raspberry Pi
 # ============================================================
 
 clean:  ## clean up temporary files
-	rm -f conda_env.tar.gz
+	rm -f $(CONDA_ENV_FILE)
 
 .PHONY: check_mamba_setup
 check_mamba_setup:
-	@ if [ -z "${MAMBA_EXE}" ]; then \
-		echo "ERROR: Environment variable MAMBA_EXE is not set."; \
+	@ if [ -z "${MAMBA_EXE}" ] || [ -z "${MAMBA_ROOT_PREFIX}" ]; then \
+		echo "ERROR: Either MAMBA_EXE or MAMBA_ROOT_PREFIX is not set."; \
 		echo "Is Micromamba installed?"; \
 		echo "See https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html"; \
 		exit 1; \
 	fi
-	@ if [ -z "${MAMBA_ROOT_PREFIX}" ]; then \
-		echo "ERROR: Environment variable MAMBA_ROOT_PREFIX is not set."; \
-		echo "Is Micromamba installed?"; \
-		echo "See https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html"; \
-		exit 1; \
-	fi
-
-conda_env.tar.gz: check_mamba_setup
-	${MAMBA_EXE} env create -f environment.yaml -n raspios_$(PROJECT_NAME) --platform linux-aarch64 -y
-	tar -zcf conda_env.tar.gz -C ${MAMBA_ROOT_PREFIX}/envs/raspios_$(PROJECT_NAME) .
-	${MAMBA_EXE} env remove -n raspios_$(PROJECT_NAME) -y
 
 .PHONY: pack_conda_env
-pack_conda_env: conda_env.tar.gz  ## prepare conda environment to install it offline on your Upkie
+pack_conda_env: check_mamba_setup  ## prepare conda environment to install it offline on your Upkie
+	${MAMBA_EXE} env create -f environment.yaml -n raspios_$(PROJECT_NAME) --platform linux-aarch64 -y
+	tar -zcf $(CONDA_ENV_FILE) -C ${MAMBA_ROOT_PREFIX}/envs/raspios_$(PROJECT_NAME) .
+	${MAMBA_EXE} env remove -n raspios_$(PROJECT_NAME) -y
 
 .PHONY: check_mamba_setup unpack_conda_env
 unpack_conda_env:  ### unpack conda environment to remote conda path
-	-${MAMBA_EXE} env list | grep $(PROJECT_NAME) > /dev/null && micromamba env remove -n $(PROJECT_NAME) -y
+	-${MAMBA_EXE} env list | grep $(PROJECT_NAME) > /dev/null && ${MAMBA_EXE} env remove -n $(PROJECT_NAME) -y
 	mkdir -p ${MAMBA_ROOT_PREFIX}/envs/$(PROJECT_NAME)
-	tar -zxf conda_env.tar.gz -C ${MAMBA_ROOT_PREFIX}/envs/$(PROJECT_NAME)
+	tar -zxf $(CONDA_ENV_FILE) -C ${MAMBA_ROOT_PREFIX}/envs/$(PROJECT_NAME)
