@@ -216,6 +216,7 @@ class HeightController:
         self.__initialized = False
         self.ik_configuration = neutral_configuration
         self.jump_playback = None
+        self.knee_side = "forward" if knee_flip else "backward"
         self.last_velocity = np.zeros(robot.nv)
         self.max_crouch_height = max_crouch_height
         self.max_crouch_velocity = max_crouch_velocity
