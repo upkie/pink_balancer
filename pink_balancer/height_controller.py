@@ -183,7 +183,13 @@ class HeightController:
             ),
         }
         tasks["posture"].set_target(
-            custom_configuration_vector(robot, left_knee=0.2, right_knee=-0.2)
+            custom_configuration_vector(
+                robot,
+                left_hip=-0.1,
+                left_knee=0.2,
+                right_hip=0.1,
+                right_knee=-0.2,
+            )
         )
 
         transform_rest_to_world = {
