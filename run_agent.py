@@ -59,7 +59,6 @@ def run(
     """
     dt = 1.0 / frequency
     rate = RateLimiter(frequency, "controller")
-
     spine.start(spine_config)
     observation = spine.get_observation()  # pre-reset observation
     while True:
