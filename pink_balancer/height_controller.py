@@ -6,6 +6,7 @@
 # Copyright 2023-2024 Inria
 
 import gin
+import matplotlive
 import meshcat_shapes
 import numpy as np
 import pink
@@ -209,6 +210,11 @@ class HeightController:
             "right_contact": np.zeros((4, 4)),
         }
         self.visualizer = visualizer
+        self.plot = matplotlive.LivePlot(
+            timestep=0.005,
+            duration=10.0,
+            ylim=(-0.3, 0.3),
+        )
 
     def get_next_height_from_joystick(
         self, observation: dict, dt: float
@@ -357,19 +363,35 @@ class HeightController:
         Returns:
             Dictionary with the new action and some internal state for logging.
         """
-        if not self.__initialized:
-            self._process_first_observation(observation)
+        servo_action = self.get_ik_servo_action(observation, dt)  # always run
+        if self.__init_duration < 5.0 * self.leg_return_period:
+            servo_action = self.get_init_servo_action(observation, dt)
+        action = {"servo": servo_action}
+        for key in self.servo_layout.keys():
+            self.plot.send(key, servo_action[key]["position"])
+        self.plot.update()
+        return action
 
+    def get_ik_servo_action(self, observation: dict, dt: float) -> dict:
+        """Compute leg motion by differential inverse kinematics.
+
+        Args:
+            observation: Latest observation.
+            dt: Duration in seconds until next cycle.
+
+        Returns:
+            Dictionary with the new action and some internal state for logging.
+        """
         self.update_target_height(observation, dt)
         self.update_ik_targets(observation, dt)
-        velocity = solve_ik(
-            self.configuration,
+        ik_velocity = solve_ik(
+            self.ik_configuration,
             self.tasks.values(),
             dt,
             solver="proxqp",
         )
-        self.configuration.integrate_inplace(velocity, dt)
-        self.last_velocity = velocity
+        self.ik_configuration.integrate_inplace(ik_velocity, dt)
+        self.last_velocity = ik_velocity
 
         self._observe_ground_positions(observation)
         return serialize_to_servo_action(
