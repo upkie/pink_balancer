@@ -17,6 +17,7 @@ from pink.tasks import FrameTask, PostureTask
 from pink.utils import custom_configuration_vector
 from pink.visualization import start_meshcat_visualizer
 from upkie.utils.clamp import clamp
+from upkie.utils.filters import low_pass_filter
 
 
 def observe_configuration(
@@ -55,7 +56,7 @@ def serialize_to_servo_action(configuration, velocity, servo_layout) -> dict:
     target = {}
     model = configuration.model
     tau_max = model.effortLimit
-    for joint_name, servo in servo_layout.items():
+    for joint_name in servo_layout.keys():
         joint_id = model.getJointId(joint_name)
         joint = model.joints[joint_id]
         target[joint_name] = {
@@ -92,6 +93,7 @@ class HeightController:
         transform_rest_to_world: Rest frame pose for each end effector.
     """
 
+    leg_return_period: float
     max_crouch_height: float
     max_crouch_velocity: float
     robot: pin.RobotWrapper
@@ -105,6 +107,7 @@ class HeightController:
 
     def __init__(
         self,
+        leg_return_period: float,
         max_crouch_height: float,
         max_crouch_velocity: float,
         max_height_difference: float,
@@ -114,6 +117,8 @@ class HeightController:
         """Create controller.
 
         Args:
+            leg_return_period: Time constant for the legs (hips and knees) to
+                revert to their neutral configuration.
             max_crouch_height: Maximum distance along the vertical axis that
                 the robot goes down while crouching, in [m].
             max_crouch_velocity: Maximum vertical velocity in [m] / [s].
@@ -304,26 +309,6 @@ class HeightController:
             )
             self.tasks[target].set_target(transform_target_to_world)
 
-    def _process_first_observation(self, observation: dict) -> None:
-        """Function called at the first iteration of the controller.
-
-        Args:
-            observation: Observation from the spine.
-        """
-        q = observe_configuration(
-            observation, self.configuration, self.servo_layout
-        )
-        self.configuration = pink.Configuration(
-            self.robot.model, self.robot.data, q
-        )
-        for target in ["left_contact", "right_contact"]:
-            transform_target_to_world = (
-                self.configuration.get_transform_frame_to_world(target)
-            )
-            self.tasks[target].set_target(transform_target_to_world)
-            self.transform_rest_to_world[target] = transform_target_to_world
-        self.__initialized = True
-
     def _observe_ground_positions(self, observation: dict) -> None:
         """Observe the transform from right to left ground frames."""
         transform_left_to_world = self.tasks[
@@ -387,8 +372,35 @@ class HeightController:
         self.last_velocity = velocity
 
         self._observe_ground_positions(observation)
-        servo_action = serialize_to_servo_action(
-            self.configuration, velocity, self.servo_layout
+        return serialize_to_servo_action(
+            self.ik_configuration, ik_velocity, self.servo_layout
         )
-        action = {"servo": servo_action}
-        return action
+
+    def get_init_servo_action(self, observation: dict, dt: float) -> dict:
+        """Initial phase where we return legs to the neutral configuration.
+
+        Args:
+            observation: Observation from the spine.
+            dt: Duration in seconds until next cycle.
+
+        Returns:
+            Dictionary with the new action.
+        """
+        self.__init_duration += dt
+        if self.q_return is None:
+            self.q_return = observe_configuration(
+                observation, self.ik_configuration, self.servo_layout
+            )
+        self.q_return = low_pass_filter(
+            prev_output=self.q_return,
+            cutoff_period=self.leg_return_period,
+            new_input=self.ik_configuration.q,
+            dt=dt,
+        )
+        return_configuration = pink.Configuration(
+            self.robot.model, self.robot.data, self.q_return
+        )
+        return_velocity = np.zeros(self.robot.nv)
+        return serialize_to_servo_action(
+            return_configuration, return_velocity, self.servo_layout
+        )
