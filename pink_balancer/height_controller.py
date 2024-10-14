@@ -6,7 +6,6 @@
 # Copyright 2023-2024 Inria
 
 import gin
-import matplotlive
 import meshcat_shapes
 import numpy as np
 import pink
@@ -225,11 +224,6 @@ class HeightController:
         self.tasks = tasks
         self.transform_rest_to_world = transform_rest_to_world
         self.visualizer = visualizer
-        self.plot = matplotlive.LivePlot(
-            timestep=0.005,
-            duration=10.0,
-            ylim=(-0.3, 0.3),
-        )
 
     def get_next_height_from_joystick(
         self, observation: dict, dt: float
@@ -381,9 +375,6 @@ class HeightController:
         if not self.__initialized:
             servo_action = self.get_init_servo_action(observation, dt)
         action = {"servo": servo_action}
-        for key in self.servo_layout.keys():
-            self.plot.send(key, servo_action[key]["position"])
-        self.plot.update()
         return action
 
     def get_ik_servo_action(self, observation: dict, dt: float) -> dict:
@@ -437,7 +428,7 @@ class HeightController:
         )
         # Difference is also OK, configuration space is a vector space
         q_diff = self.q_init - self.ik_configuration.q
-        if np.linalg.norm(q_diff, ord=1) < 1e-10:
+        if np.linalg.norm(q_diff, ord=1) < 1e-5:
             self.__initialized = True
         return_configuration = pink.Configuration(
             self.robot.model, self.robot.data, self.q_init
