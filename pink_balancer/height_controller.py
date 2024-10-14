@@ -130,7 +130,9 @@ class HeightController:
             visualize: If true, open a MeshCat visualizer on the side.
         """
         robot = upkie_description.load_in_pinocchio(root_joint=None)
-        configuration = pink.Configuration(robot.model, robot.data, robot.q0)
+        neutral_configuration = pink.Configuration(
+            robot.model, robot.data, robot.q0
+        )
         servo_layout = {
             "left_hip": {
                 "bus": 2,
@@ -182,19 +184,32 @@ class HeightController:
             custom_configuration_vector(robot, left_knee=0.2, right_knee=-0.2)
         )
 
+        transform_rest_to_world = {
+            "left_contact": np.zeros((4, 4)),
+            "right_contact": np.zeros((4, 4)),
+        }
+        for target in ["left_contact", "right_contact"]:
+            transform_target_to_world = (
+                neutral_configuration.get_transform_frame_to_world(target)
+            )
+            tasks[target].set_target(transform_target_to_world)
+            transform_rest_to_world[target] = transform_target_to_world
+
         visualizer = None
         if visualize:
             visualizer = start_meshcat_visualizer(robot)
             add_target_frames(visualizer)
 
-        self.__initialized = False
-        self.configuration = configuration
+        self.__init_duration = 0.0  # [s]
+        self.ik_configuration = neutral_configuration
         self.jump_playback = None
         self.last_velocity = np.zeros(robot.nv)
+        self.leg_return_period = leg_return_period
         self.max_crouch_height = max_crouch_height
         self.max_crouch_velocity = max_crouch_velocity
         self.max_height_difference = max_height_difference
         self.max_lean_velocity = max_lean_velocity
+        self.q_return = None
         self.robot = robot
         self.servo_layout = servo_layout
         self.target_position_wheel_in_rest = {
@@ -205,10 +220,7 @@ class HeightController:
             "right_contact": np.zeros(3),
         }
         self.tasks = tasks
-        self.transform_rest_to_world = {
-            "left_contact": np.zeros((4, 4)),
-            "right_contact": np.zeros((4, 4)),
-        }
+        self.transform_rest_to_world = transform_rest_to_world
         self.visualizer = visualizer
         self.plot = matplotlive.LivePlot(
             timestep=0.005,
@@ -330,7 +342,7 @@ class HeightController:
         }
 
         if self.visualizer is not None:
-            self.visualizer.display(self.configuration.q)
+            self.visualizer.display(self.ik_configuration.q)
             viewer = self.visualizer.viewer
             viewer["left_contact_target"].set_transform(
                 transform_left_to_world.np
@@ -346,7 +358,7 @@ class HeightController:
             Log data as a dictionary.
         """
         return {
-            "configuration": self.configuration.q,
+            "configuration": self.ik_configuration.q,
             "target_height": self.target_height,
             "height_difference": self.height_difference,
             "velocity": self.last_velocity,
