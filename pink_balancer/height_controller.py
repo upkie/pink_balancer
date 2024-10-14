@@ -203,7 +203,7 @@ class HeightController:
             visualizer = start_meshcat_visualizer(robot)
             add_target_frames(visualizer)
 
-        self.__init_duration = 0.0  # [s]
+        self.__initialized = False
         self.ik_configuration = neutral_configuration
         self.jump_playback = None
         self.last_velocity = np.zeros(robot.nv)
@@ -378,7 +378,7 @@ class HeightController:
             Dictionary with the new action and some internal state for logging.
         """
         servo_action = self.get_ik_servo_action(observation, dt)  # always run
-        if self.__init_duration < 5.0 * self.leg_return_period:
+        if not self.__initialized:
             servo_action = self.get_init_servo_action(observation, dt)
         action = {"servo": servo_action}
         for key in self.servo_layout.keys():
@@ -435,6 +435,10 @@ class HeightController:
                 (self.robot.nv,), self.max_init_joint_velocity
             ),
         )
+        # Difference is also OK, configuration space is a vector space
+        q_diff = self.q_init - self.ik_configuration.q
+        if np.linalg.norm(q_diff, ord=1) < 1e-10:
+            self.__initialized = True
         return_configuration = pink.Configuration(
             self.robot.model, self.robot.data, self.q_init
         )
