@@ -96,17 +96,17 @@ class HeightController:
         transform_rest_to_world: Rest frame pose for each end effector.
     """
 
+    height_difference: float = 0.0
     max_crouch_height: float
     max_crouch_velocity: float
+    max_height_difference: float
     max_init_joint_velocity: float
+    max_lean_velocity: float
     robot: pin.RobotWrapper
+    target_height: float = 0.0
     target_position_wheel_in_rest: dict[NDArray[float]]
     tasks: dict
     transform_rest_to_world: dict
-    max_height_difference: float
-    max_lean_velocity: float
-    target_height: float = 0.0
-    height_difference: float = 0.0
 
     def __init__(
         self,
