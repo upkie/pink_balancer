@@ -100,6 +100,7 @@ if __name__ == "__main__":
     wheel_odometry = spine_config["wheel_odometry"]
     wheel_odometry["signed_radius"]["left_wheel"] = +wheel_radius
     wheel_odometry["signed_radius"]["right_wheel"] = -wheel_radius
+    logging.info(f"Knees bend {controller.height_controller.knee_side}")
     logging.info(f"Wheel radius: {wheel_radius} m")
     try:
         run(spine, spine_config, controller)
