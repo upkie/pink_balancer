@@ -86,6 +86,7 @@ class HeightController:
     """Compute leg inverse kinematics.
 
     Attributes:
+        knee_flip: Set to True to bend knees forward rather than backward.
         max_crouch_height: Maximum distance along the vertical axis that the
             robot goes down while crouching, in [m].
         max_init_joint_velocity: Maximum joint velocity during the initial
@@ -97,6 +98,7 @@ class HeightController:
     """
 
     height_difference: float = 0.0
+    knee_flip: bool
     max_crouch_height: float
     max_crouch_velocity: float
     max_height_difference: float
@@ -110,6 +112,7 @@ class HeightController:
 
     def __init__(
         self,
+        knee_flip: bool,
         max_crouch_height: float,
         max_crouch_velocity: float,
         max_height_difference: float,
@@ -182,13 +185,15 @@ class HeightController:
                 cost=1e-3,  # [cost] / [rad]
             ),
         }
+
+        sign = -1.0 if knee_flip else +1.0
         tasks["posture"].set_target(
             custom_configuration_vector(
                 robot,
-                left_hip=-0.1,
-                left_knee=0.2,
-                right_hip=0.1,
-                right_knee=-0.2,
+                left_hip=(-sign * 0.1),
+                left_knee=(+sign * 0.2),
+                right_hip=(+sign * 0.1),
+                right_knee=(-sign * 0.2),
             )
         )
 
