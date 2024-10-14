@@ -18,7 +18,8 @@ from pink.tasks import FrameTask, PostureTask
 from pink.utils import custom_configuration_vector
 from pink.visualization import start_meshcat_visualizer
 from upkie.utils.clamp import clamp
-from upkie.utils.filters import low_pass_filter
+
+from .utils import abs_bounded_derivative_filter
 
 
 def observe_configuration(
@@ -88,15 +89,17 @@ class HeightController:
     Attributes:
         max_crouch_height: Maximum distance along the vertical axis that the
             robot goes down while crouching, in [m].
+        max_init_joint_velocity: Maximum joint velocity during the initial
+            phase, in [rad] / [s].
         robot: Robot model used for inverse kinematics.
         target_position_wheel_in_rest: Target position in the rest frame.
         tasks: Dictionary of inverse kinematics tasks.
         transform_rest_to_world: Rest frame pose for each end effector.
     """
 
-    leg_return_period: float
     max_crouch_height: float
     max_crouch_velocity: float
+    max_init_joint_velocity: float
     robot: pin.RobotWrapper
     target_position_wheel_in_rest: dict[NDArray[float]]
     tasks: dict
@@ -108,21 +111,21 @@ class HeightController:
 
     def __init__(
         self,
-        leg_return_period: float,
         max_crouch_height: float,
         max_crouch_velocity: float,
         max_height_difference: float,
+        max_init_joint_velocity: float,
         max_lean_velocity: float,
         visualize: bool,
     ):
         """Create controller.
 
         Args:
-            leg_return_period: Time constant for the legs (hips and knees) to
-                revert to their neutral configuration.
             max_crouch_height: Maximum distance along the vertical axis that
                 the robot goes down while crouching, in [m].
             max_crouch_velocity: Maximum vertical velocity in [m] / [s].
+            max_init_joint_velocity: Maximum joint velocity during the initial
+                phase, in [rad] / [s].
             max_height_difference: Maximum height difference between the two
                 wheel contact points, in [m].
             max_lean_velocity: Maximum leaning (to the side) velocity, in [m] /
@@ -204,12 +207,12 @@ class HeightController:
         self.ik_configuration = neutral_configuration
         self.jump_playback = None
         self.last_velocity = np.zeros(robot.nv)
-        self.leg_return_period = leg_return_period
         self.max_crouch_height = max_crouch_height
         self.max_crouch_velocity = max_crouch_velocity
         self.max_height_difference = max_height_difference
+        self.max_init_joint_velocity = max_init_joint_velocity
         self.max_lean_velocity = max_lean_velocity
-        self.q_return = None
+        self.q_init = None
         self.robot = robot
         self.servo_layout = servo_layout
         self.target_position_wheel_in_rest = {
@@ -419,19 +422,21 @@ class HeightController:
         Returns:
             Dictionary with the new action.
         """
-        self.__init_duration += dt
-        if self.q_return is None:
-            self.q_return = observe_configuration(
+        if self.q_init is None:
+            self.q_init = observe_configuration(
                 observation, self.ik_configuration, self.servo_layout
             )
-        self.q_return = low_pass_filter(
-            prev_output=self.q_return,
-            cutoff_period=self.leg_return_period,
+        # Applying this filter is ok as long as our root_joint is None
+        self.q_init = abs_bounded_derivative_filter(
+            prev_output=self.q_init,
             new_input=self.ik_configuration.q,
             dt=dt,
+            max_derivative=np.full(
+                (self.robot.nv,), self.max_init_joint_velocity
+            ),
         )
         return_configuration = pink.Configuration(
-            self.robot.model, self.robot.data, self.q_return
+            self.robot.model, self.robot.data, self.q_init
         )
         return_velocity = np.zeros(self.robot.nv)
         return serialize_to_servo_action(
