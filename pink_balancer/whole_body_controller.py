@@ -35,6 +35,7 @@ class WholeBodyController:
             turning_gain_scale: Additional gain scale added when the robot
                 is turning to keep the legs stiff in spite of the ground
                 pulling them apart.
+            visualize: If true, open a MeshCat visualizer on the side.
         """
         self.gain_scale = clamp(gain_scale, 0.1, 2.0)
         self.height_controller = HeightController(visualize=visualize)
