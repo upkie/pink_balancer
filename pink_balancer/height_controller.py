@@ -124,6 +124,8 @@ class HeightController:
         """Create controller.
 
         Args:
+            knees_forward: Set to True to bend knees forward rather than
+                backward.
             max_crouch_height: Maximum distance along the vertical axis that
                 the robot goes down while crouching, in [m].
             max_crouch_velocity: Maximum vertical velocity in [m] / [s].
