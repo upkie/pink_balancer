@@ -1,5 +1,0 @@
-# -*- python -*-
-#
-# SPDX-License-Identifier: Apache-2.0
-
-SagittalBalancer.max_ground_velocity = 2.0           # [m] / [s]
