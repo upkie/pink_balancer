@@ -7,13 +7,9 @@ An agent for [Upkie](https://github.com/upkie/upkie/) that combines wheeled bala
 - Install Python packages to a conda environment: `conda env create -f environment.yaml`
 - Activate conda environment: `conda activate pink_balancer`
 - Simulation:
-    - Run the Bullet spine: `./start_simulation.sh` (from your Upkie repository)
-    - Run the agent: `python run_agent.py -c bullet`
+    - Run `./start_simulation.sh` from your `upkie` repository
+    - Run the agent: `python run_agent.py`
 - Real Upkie:
     - Upload this repository to your Upkie: `make upload`
-    - Run the pi3hat spine: `pi3hat_spine` (on your robot)
+    - Run the pi3hat spine: `pi3hat_spine` (on your Upkie)
     - Run the agent: `python run_agent.py`
-
-## Configuration tweaks
-
-- Select the MPC or PI sagittal balancer in `WheelController.balancer_class`

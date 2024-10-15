@@ -2,9 +2,4 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-PIBalancerGains.pitch_damping = 1.8
-PIBalancerGains.pitch_stiffness = 20.0
-PIBalancerGains.position_damping = 0.7
-PIBalancerGains.position_stiffness = 1.6
-
 WheelController.wheel_radius = 0.055  # [m]
