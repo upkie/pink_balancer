@@ -14,7 +14,7 @@ import numpy as np
 from upkie.utils.filters import abs_bounded_derivative_filter
 
 from .remote_control import RemoteControl
-from .sagittal_balance import MPCBalancer, PIBalancer, SagittalBalancer
+from .sagittal_balance import MPCBalancer, SagittalBalancer
 
 
 @gin.configurable
@@ -44,7 +44,7 @@ class WheelController:
 
     def __init__(
         self,
-        balancer_class: Literal["MPCBalancer", "PIBalancer"],
+        balancer_class: Literal["MPCBalancer"],
         turning_deadband: float,
         turning_decision_time: float,
         wheel_radius: float,
@@ -61,9 +61,7 @@ class WheelController:
             wheel_radius: Wheel radius in [m].
         """
         assert 0.0 <= turning_deadband <= 1.0
-        sagittal_balancer = (
-            MPCBalancer() if balancer_class == "MPCBalancer" else PIBalancer()
-        )
+        sagittal_balancer = MPCBalancer()
         self.remote_control = RemoteControl()
         self.sagittal_balancer = sagittal_balancer
         self.target_ground_velocity = 0.0
