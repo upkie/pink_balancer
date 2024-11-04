@@ -143,7 +143,7 @@ class MPCBalancer(SagittalBalancer):
         else:  # not self.warm_start
             qpsol = solve_problem(self.mpc_qp.problem, solver="proxqp")
         if not qpsol.found:
-            logging.warn("No solution found to the MPC problem")
+            logging.warning("No solution found to the MPC problem")
         plan = Plan(self.mpc_problem, qpsol)
 
         if not floor_contact:
