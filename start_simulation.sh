@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SCRIPT=$(realpath "$0")
-SCRIPTDIR=$(dirname "${SCRIPT}")
 
 UPKIE_DOWNLOAD_URL="https://github.com/upkie/upkie/releases/download"
 
@@ -53,10 +52,13 @@ fi
 if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v BUILD ]]; then
     if [ -f cache/bullet_spine ]; then
         OUTPUT=$(./cache/bullet_spine --version)
-        CACHE_VERSION=$(echo "${OUTPUT}" | awk '{print $4}')
-        if [ "${CACHE_VERSION}" != "${VERSION}" ]; then
-            echo "Cached version of the simulation spine (${CACHE_VERSION}) is not ${VERSION}"
-            rm -f cache/bullet_spine
+        CACHE_RC=$?
+        if [ "${CACHE_RC}" -eq 0 ]; then
+            CACHE_VERSION=$(echo "${OUTPUT}" | awk '{print $4}')
+            if [ "${CACHE_VERSION}" != "${VERSION}" ]; then
+                echo "Cached version of the simulation spine (${CACHE_VERSION}) is not ${VERSION}"
+                rm -f cache/bullet_spine
+            fi
         fi
     fi
 
@@ -71,7 +73,7 @@ if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v BUILD ]]; then
     fi
 
     if [[ $CURL_TAR_RC -eq 0 ]]; then
-        echo "Simulation spine is ready, let's roll!"
+        echo "Simulation spine downloaded to cache, let's roll!"
         cd cache || exit
         OUTPUT=$(./bullet_spine "${SPINE_ARGS[@]}" 2>&1)
         SPINE_RC=$?
@@ -79,7 +81,7 @@ if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v BUILD ]]; then
         # Return code 1 is from closing the simulation GUI
         if [ $SPINE_RC -eq 1 ]; then
             if echo "$OUTPUT" | grep -q "version.*GLIBC"; then
-                echo "It seems your GLIBC version is not compatible with the downloaded binary"
+                echo "Unfortunately, it seems your GLIBC version is not compatible with the downloaded binary"
                 BUILD=1
             fi
         elif [ $SPINE_RC -ne 0 ] && [ $SPINE_RC -ne 1 ]; then
@@ -92,6 +94,9 @@ if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v BUILD ]]; then
 fi
 
 if [[ -v BUILD ]]; then
-    echo "Building the simulation spine from source..."
-    (cd "${SCRIPTDIR}" && "${SCRIPTDIR}"/tools/bazelisk run //spines:bullet_spine -- "${SPINE_ARGS[@]}")
+    echo "You will need to build the simulation spine from the upkie repository:"
+    echo ""
+    echo "    git clone https://github.com/upkie/upkie"
+    echo "    cd upkie && ./start_simulation.sh"
+    echo ""
 fi
