@@ -7,7 +7,7 @@ An agent for [Upkie](https://github.com/upkie/upkie/) that combines wheeled bala
 - Install Python packages to a conda environment: `conda env create -f environment.yaml`
 - Activate conda environment: `conda activate pink_balancer`
 - Simulation:
-    - Run `./start_simulation.sh` from your `upkie` repository
+    - Run `./start_simulation.sh`
     - Run the agent: `python run_agent.py`
 - Real Upkie:
     - Upload this repository to your Upkie: `make upload`
