@@ -85,6 +85,7 @@ class MPCBalancer(SagittalBalancer):
         mpc_problem.initial_state = np.zeros(4)
         mpc_qp = MPCQP(mpc_problem)
         workspace = ProxQPWorkspace(mpc_qp)
+        self.__nb_fall_steps = 0
         self.commanded_velocity = 0.0
         self.mpc_problem = mpc_problem
         self.mpc_qp = mpc_qp
@@ -92,9 +93,19 @@ class MPCBalancer(SagittalBalancer):
         self.warm_start = warm_start
         self.workspace = workspace
 
+    def raise_if_fallen(self, base_pitch: float) -> None:
+        if abs(base_pitch) > self.fall_pitch:
+            self.__nb_fall_steps += 1
+            if self.__nb_fall_steps > 1:
+                raise FallDetected(
+                    f"Base angle {base_pitch=:.3} rad denotes a fall"
+                )
+        else:  # abs(base_pitch) < self.fall_pitch:
+            self.__nb_fall_steps = 0
+
     def compute_ground_velocity(
         self,
-        target_ground_velocity: float,  # TODO(scaron): use this
+        target_ground_velocity: float,
         observation: dict,
         dt: float,
     ) -> float:
@@ -115,9 +126,7 @@ class MPCBalancer(SagittalBalancer):
         ground_position = observation["wheel_odometry"]["position"]
         ground_velocity = observation["wheel_odometry"]["velocity"]
 
-        if abs(base_pitch) > self.fall_pitch:
-            raise FallDetected(
-                    f"Base angle {base_pitch=:.3} rad denotes a fall")
+        self.raise_if_fallen(base_pitch)
 
         # NB: state structure comes from WheeledInvertedPendulum
         cur_state = np.array(
