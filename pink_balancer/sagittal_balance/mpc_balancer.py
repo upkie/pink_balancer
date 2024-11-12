@@ -94,6 +94,11 @@ class MPCBalancer(SagittalBalancer):
         self.workspace = workspace
 
     def raise_if_fallen(self, base_pitch: float) -> None:
+        """Raise an exception if the robot has fallen.
+
+        Args:
+            base_pitch: Current base pitch angle, in radians.
+        """
         if abs(base_pitch) > self.fall_pitch:
             self.__nb_fall_steps += 1
             if self.__nb_fall_steps > 1:
