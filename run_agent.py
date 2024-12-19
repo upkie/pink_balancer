@@ -58,12 +58,19 @@ def run(
         frequency: Control frequency in Hz.
     """
     dt = 1.0 / frequency
-    rate = RateLimiter(frequency, "controller")
-    observation = spine.start(spine_config)
+    slant_velocity = 0.0
+    vertical_velocity = 0.0
     while True:
-        action = controller.cycle(observation, dt)
-        observation = spine.set_action(action)
-        rate.sleep()
+        try:
+            axis_value: float = spine_obs["joystick"]["pad_axis"][1]
+            vertical_velocity = self.max_crouch_velocity * axis_value
+        except KeyError:
+            vertical_velocity = 0.0
+        try:
+            axis_value: float = observation["joystick"]["pad_axis"][0]
+            slant_velocity = self.max_lean_velocity * axis_value
+        except KeyError:
+            slant_velocity = 0.0
 
 
 if __name__ == "__main__":
