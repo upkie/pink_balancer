@@ -1,5 +1,8 @@
+*.egg-info
+.pixi
 __pycache__
+activate.sh
 bazel-*
-cache/
-conda_env.tar.gz
+env/
+environment.tar
 tools/bazel
