@@ -1,3 +1,40 @@
+[project]
+name = "pink_balancer"
+version = "1.0.0"
+description = "The Pink balancer is a work-in-progress agent for Upkie wheeled bipeds"
+requires-python = ">= 3.9"
+dependencies = []
+
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core >=2,<4"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+pink_balancer = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+gin-config = ">=0.5.0"
+meshcat-shapes = ">=0.3.0"
+pink = ">=3.0.0,<4"
+pinocchio = ">=3.1.0,<4"
+qpmpc = ">=3.0.1,<4"
+qpsolvers = ">=4.2.0,<5"
+upkie = ">=6,<7"
+
+[tool.pixi.feature.pack.dependencies]
+pixi-pack = "*"
+
+[tool.pixi.feature.pack.tasks]
+pack-to-upkie = "pixi-pack pack -e default --platform linux-aarch64 --ignore-pypi-errors"
+
+[tool.pixi.environments]
+default = { features = [], solve-group = "default" }
+pack = { features = ["pack"], solve-group = "default" }
+
 [tool.ruff]
 line-length = 79
 
