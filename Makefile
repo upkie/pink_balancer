@@ -29,7 +29,12 @@ upload: check_upkie_name  ## upload built targets to the Raspberry Pi
 	ssh ${UPKIE_NAME} sudo date -s "$(CURDATE)"
 	ssh ${UPKIE_NAME} mkdir -p $(CURDIR_NAME)
 	ssh ${UPKIE_NAME} sudo find $(CURDIR_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
-	rsync -Lrtu --delete-after --exclude .pixi --progress $(CURDIR)/ ${UPKIE_NAME}:$(CURDIR_NAME)/
+	rsync -Lrtu --delete-after \
+		--exclude .pixi \
+		--exclude activate.sh \
+		--exclude env/ \
+		--progress \
+		$(CURDIR)/ ${UPKIE_NAME}:$(CURDIR_NAME)/
 
 environment.tar:
 	@pixi run pack-to-upkie || { \
