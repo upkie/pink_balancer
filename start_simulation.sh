@@ -15,7 +15,7 @@ fi
 
 for arg in "$@"; do
     if [ "$arg" == "--build" ]; then
-        BUILD=1
+        REBUILD=1
         break
     fi
 done
@@ -46,7 +46,7 @@ else
     echo "Unsupported system: $SYSTEM"
 fi
 
-if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v BUILD ]]; then
+if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v REBUILD ]]; then
     if [ -f cache/bullet_spine ]; then
         OUTPUT=$(./cache/bullet_spine --version)
         CACHE_RC=$?
@@ -79,18 +79,18 @@ if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v BUILD ]]; then
         if [ $SPINE_RC -eq 1 ]; then
             if echo "$OUTPUT" | grep -q "version.*GLIBC"; then
                 echo "⚠️  It seems your GLIBC version is not compatible with the downloaded binary"
-                BUILD=1
+                REBUILD=1
             fi
         elif [ $SPINE_RC -ne 0 ] && [ $SPINE_RC -ne 1 ]; then
             echo "Simulation spine exited with code $SPINE_RC"
             echo "If this was unexpected, you can also try \`$0 --build\`"
         fi
     else
-        BUILD=1
+        REBUILD=1
     fi
 fi
 
-if [[ -v BUILD ]]; then
+if [[ -v REBUILD ]]; then
     echo "You will need to build the simulation spine from the upkie repository:"
     echo ""
     echo "    git clone https://github.com/upkie/upkie"
