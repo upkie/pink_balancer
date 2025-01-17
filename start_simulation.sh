@@ -1,10 +1,7 @@
 #!/bin/bash
 
-SCRIPT=$(realpath "$0")
-
-UPKIE_DOWNLOAD_URL="https://github.com/upkie/upkie/releases/download"
-
-VERSION=6.0.0
+DOWNLOAD_URL="https://github.com/upkie/upkie/releases/download"
+VERSION=6.1.0
 
 SYSTEM=$(uname -s)
 ARCH=$(uname -m)
@@ -27,13 +24,13 @@ if [[ "$SYSTEM" == Darwin ]]; then
     echo "macOS system"
     if [[ "$ARCH" == x86_64* ]]; then
         echo "x86-64 architecture"
-        SPINE_ARCHIVE="$UPKIE_DOWNLOAD_URL"/v"$VERSION"/darwin_x86_bullet_spine.tar.gz
+        SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/darwin_x86_bullet_spine.tar.gz
     elif [[ "$ARCH" == i*86 ]]; then
         echo "x86-32 architecture"
-        SPINE_ARCHIVE="$UPKIE_DOWNLOAD_URL"/v"$VERSION"/darwin_x86_bullet_spine.tar.gz
+        SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/darwin_x86_bullet_spine.tar.gz
     elif  [[ "$ARCH" == arm* ]]; then
         echo "ARM architecture"
-        SPINE_ARCHIVE="$UPKIE_DOWNLOAD_URL"/v"$VERSION"/darwin_arm64_bullet_spine.tar.gz
+        SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/darwin_arm64_bullet_spine.tar.gz
     else
         echo "Unsupported architecture $ARCH"
     fi
@@ -41,7 +38,7 @@ elif  [[ "$SYSTEM" == Linux ]]; then
     echo "Linux system"
     if [[ "$ARCH" == x86_64* ]]; then
         echo "x86-64 architecture"
-        SPINE_ARCHIVE="$UPKIE_DOWNLOAD_URL"/v"$VERSION"/linux_amd64_bullet_spine.tar.gz
+        SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/linux_amd64_bullet_spine.tar.gz
     else
         echo "Unsupported architecture: $ARCH"
     fi
