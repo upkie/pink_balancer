@@ -21,29 +21,29 @@ for arg in "$@"; do
 done
 
 if [[ "$SYSTEM" == Darwin ]]; then
-    echo "macOS system"
+    echo "🍏 macOS operating system"
     if [[ "$ARCH" == x86_64* ]]; then
-        echo "x86-64 architecture"
+        echo "⚙️  x86 64-bit CPU architecture"
         SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/darwin_x86_bullet_spine.tar.gz
     elif [[ "$ARCH" == i*86 ]]; then
-        echo "x86-32 architecture"
+        echo "⚙️  x86 32-bit CPU architecture"
         SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/darwin_x86_bullet_spine.tar.gz
     elif  [[ "$ARCH" == arm* ]]; then
-        echo "ARM architecture"
+        echo "⚙️  ARM CPU architecture"
         SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/darwin_arm64_bullet_spine.tar.gz
     else
         echo "Unsupported architecture $ARCH"
     fi
 elif  [[ "$SYSTEM" == Linux ]]; then
-    echo "Linux system"
+    echo "🐧 Linux operating system"
     if [[ "$ARCH" == x86_64* ]]; then
-        echo "x86-64 architecture"
+        echo "⚙️  x86 64-bit CPU architecture"
         SPINE_ARCHIVE="$DOWNLOAD_URL"/v"$VERSION"/linux_amd64_bullet_spine.tar.gz
     else
-        echo "Unsupported architecture: $ARCH"
+        echo "Unsupported CPU architecture: $ARCH"
     fi
 else
-    echo "Unsupported system: $SYSTEM"
+    echo "Unsupported operating system: $SYSTEM"
 fi
 
 if [[ -n "$SPINE_ARCHIVE" ]] && [[ ! -v REBUILD ]]; then
