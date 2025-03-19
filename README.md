@@ -37,3 +37,12 @@ Start the simulation or pi3hat spine, then run:
 ```console
 make run_agent
 ```
+
+### Gamepad commands
+
+Once the agent is running, you can direct your Upkie using the game controller 🎮
+
+- **Left joystick:** go forward right backward
+- **Right joystick:** turn left or right
+- **Directional pad:** down to crouch, up to stand up
+- **Right button:** (B on an Xbox controller, red circle on a PS4 controller) emergency stop 🚨 all motors will turn off
