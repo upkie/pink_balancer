@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DOWNLOAD_URL="https://github.com/upkie/upkie/releases/download"
-VERSION=6.1.0
+VERSION=8.0.0
 
 SYSTEM=$(uname -s)
 ARCH=$(uname -m)
