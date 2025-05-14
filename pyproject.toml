@@ -25,14 +25,16 @@ qpmpc = ">=3.0.1,<4"
 qpsolvers = ">=4.2.0,<5"
 upkie = "==8.0.0"
 
-[tool.pixi.feature.pack.dependencies]
-pixi-pack = "*"
+[tool.pixi.feature.agent]
+tasks.agent = "python run_agent.py"
 
-[tool.pixi.feature.pack.tasks]
-pack-to-upkie = "pixi-pack pack -e default --platform linux-aarch64 --ignore-pypi-errors"
+[tool.pixi.feature.pack]
+dependencies = { pixi-pack = "*" }
+tasks.pack-to-upkie = "pixi-pack pack -e default --platform linux-aarch64 --ignore-pypi-errors"
 
 [tool.pixi.environments]
 default = { features = [], solve-group = "default" }
+agent = { features = ["agent"], solve-group = "default" }
 pack = { features = ["pack"], solve-group = "default" }
 
 [tool.ruff]
