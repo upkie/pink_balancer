@@ -365,19 +365,6 @@ class HeightController:
                 transform_right_to_world.np
             )
 
-    def log(self) -> dict:
-        """Log internal state to a dictionary.
-
-        Returns:
-            Log data as a dictionary.
-        """
-        return {
-            "configuration": self.ik_configuration.q,
-            "target_height": self.target_height,
-            "height_difference": self.height_difference,
-            "velocity": self.last_velocity,
-        }
-
     def cycle(self, observation: dict, dt: float) -> dict:
         """Compute action for a new cycle.
 

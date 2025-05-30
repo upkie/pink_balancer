@@ -68,10 +68,4 @@ class WholeBodyController:
         for joint_name in ["left_hip", "left_knee", "right_hip", "right_knee"]:
             servo_action[joint_name]["kp_scale"] = kp_scale
             servo_action[joint_name]["kd_scale"] = kd_scale
-
-        action = {
-            "servo": servo_action,
-            "height_controller": self.height_controller.log(),
-            "wheel_controller": self.wheel_controller.log(),
-        }
-        return action
+        return {"servo": servo_action}

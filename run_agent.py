@@ -108,6 +108,7 @@ if __name__ == "__main__":
     logging.info(f"Max. remote-control velocity: {max_rc_vel} m/s")
     logging.info(f"Max. commanded velocity: {max_ground_vel} m/s")
     logging.info(f"Wheel radius: {wheel_radius} m")
+    logging.info(f"Additional spine config:\n\n{spine_config}\n\n")
 
     try:
         run(spine, spine_config, controller)

@@ -180,13 +180,3 @@ class MPCBalancer(SagittalBalancer):
                 label="commanded_velocity",
             )
         return self.commanded_velocity
-
-    def log(self) -> dict:
-        """Log internal state to a dictionary.
-
-        Returns:
-            Log data as a dictionary.
-        """
-        return {
-            "commanded_velocity": self.commanded_velocity,
-        }

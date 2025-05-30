@@ -49,12 +49,3 @@ class SagittalBalancer(abc.ABC):
         Returns:
             New ground velocity, in [m] / [s].
         """
-
-    @abc.abstractmethod
-    def log(self) -> dict:
-        """Log internal state to a dictionary.
-
-        Returns:
-            Log data as a dictionary.
-        """
-        return {}
