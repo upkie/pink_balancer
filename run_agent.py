@@ -73,9 +73,11 @@ if __name__ == "__main__":
     hostname = socket.gethostname()
     config_dir = Path(__file__).parent / "config"
     gin.parse_config_file(config_dir / "base.gin")
-    host_config = config_dir / f"{hostname}.gin"
+
+    host_config = Path.home() / ".config" / "upkie" / "pink_balancer.gin"
     if host_config.exists():
         gin.parse_config_file(host_config)
+
     if args.config is not None:
         gin.parse_config_file(config_dir / f"{args.config}.gin")
 
