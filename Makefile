@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-CURDATE = $(shell date -Iseconds)
 CURDIR_NAME = $(shell basename $(CURDIR))
 
 # Help snippet adapted from:
@@ -26,7 +25,6 @@ check_upkie_name:
 	fi
 
 upload: check_upkie_name  ## upload built targets to the Raspberry Pi
-	ssh ${UPKIE_NAME} sudo date -s "$(CURDATE)"
 	ssh ${UPKIE_NAME} mkdir -p $(CURDIR_NAME)
 	ssh ${UPKIE_NAME} sudo find $(CURDIR_NAME) -type d -name __pycache__ -user root -exec chmod go+wx {} "\;"
 	rsync -Lrtu --delete-after \
