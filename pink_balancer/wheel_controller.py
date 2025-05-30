@@ -34,6 +34,7 @@ class WheelController:
         wheel_radius: Wheel radius in [m].
     """
 
+    left_wheeled: bool
     sagittal_balancer: SagittalBalancer
     target_ground_velocity: float
     target_yaw_velocity: float
@@ -45,6 +46,7 @@ class WheelController:
     def __init__(
         self,
         balancer_class: Literal["MPCBalancer"],
+        left_wheeled: bool,
         turning_deadband: float,
         turning_decision_time: float,
         wheel_radius: float,
@@ -54,6 +56,9 @@ class WheelController:
         Args:
             balancer_class: String indicating the SagittalBalancer class to
                 instantiate.
+            left_wheeled: Set to True (default) if the robot is left wheeled,
+                that is, a positive turn of the left wheel results in forward
+                motion. Set to False for a right-wheeled variant.
             turning_deadband: Joystick axis value between 0.0 and 1.0 below
                 which legs stiffen but the turning motion doesn't start.
             turning_decision_time: Minimum duration in [s] for the turning
@@ -62,6 +67,7 @@ class WheelController:
         """
         assert 0.0 <= turning_deadband <= 1.0
         sagittal_balancer = MPCBalancer()
+        self.left_wheeled = left_wheeled
         self.remote_control = RemoteControl()
         self.sagittal_balancer = sagittal_balancer
         self.target_ground_velocity = 0.0
@@ -104,13 +110,16 @@ class WheelController:
         )
 
         # Sagittal translation
-        left_wheel_velocity: float = +ground_velocity / self.wheel_radius
-        right_wheel_velocity: float = -ground_velocity / self.wheel_radius
+        wheel_velocity = ground_velocity / self.wheel_radius
+        left_sign: float = 1.0 if self.left_wheeled else -1.0
+        right_sign = -left_sign
+        left_wheel_velocity = left_sign * wheel_velocity
+        right_wheel_velocity = right_sign * wheel_velocity
 
         # Yaw rotation
         delta = observation["height_controller"]["position_right_in_left"]
         contact_radius = 0.5 * np.linalg.norm(delta)
-        yaw_to_wheel = contact_radius / self.wheel_radius
+        yaw_to_wheel = left_sign * contact_radius / self.wheel_radius
         left_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
         right_wheel_velocity += yaw_to_wheel * self.target_yaw_velocity
 

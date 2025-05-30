@@ -99,8 +99,10 @@ if __name__ == "__main__":
     wheel_controller = controller.wheel_controller
     wheel_radius = wheel_controller.wheel_radius
     wheel_odometry = spine_config["wheel_odometry"]
-    wheel_odometry["signed_radius"]["left_wheel"] = +wheel_radius
-    wheel_odometry["signed_radius"]["right_wheel"] = -wheel_radius
+    left_sign: float = 1.0 if wheel_controller.left_wheeled else -1.0
+    right_sign = -left_sign
+    wheel_odometry["signed_radius"]["left_wheel"] = left_sign * wheel_radius
+    wheel_odometry["signed_radius"]["right_wheel"] = right_sign * wheel_radius
 
     max_rc_vel = wheel_controller.remote_control.max_linear_velocity
     max_ground_vel = wheel_controller.sagittal_balancer.max_ground_velocity
