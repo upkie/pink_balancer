@@ -30,7 +30,7 @@ tasks.agent = "python run_agent.py"
 
 [tool.pixi.feature.pack]
 dependencies = { pixi-pack = "*" }
-tasks.pack-to-upkie = "pixi-pack pack -e default --platform linux-aarch64 --ignore-pypi-errors"
+tasks.pack-to-upkie = "pixi-pack pack -e default --platform linux-aarch64 --ignore-pypi-non-wheel"
 
 [tool.pixi.environments]
 default = { features = [], solve-group = "default" }

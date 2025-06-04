@@ -34,23 +34,19 @@ upload: check_upkie_name  ## upload built targets to the Raspberry Pi
 		--progress \
 		$(CURDIR)/ ${UPKIE_NAME}:$(CURDIR_NAME)/
 
-environment.tar:
+pack_pixi_env:  ## pack Python environment to be deployed on your Upkie
 	@pixi run pack-to-upkie || { \
 		echo "Error: pixi not found"; \
 		echo "See https://pixi.sh/latest/#installation"; \
 		exit 1; \
 	}
 
-$(CURDIR)/activate.sh:
+unpack_pixi_env:  ### unpack Python environment
 	@pixi-pack unpack environment.tar || { \
 		echo "Error: pixi-pack not found"; \
 		echo "You can download `pixi-pack-aarch64-unknown-linux-gnu` from https://github.com/Quantco/pixi-pack/releases"; \
 		exit 1; \
 	}
-
-pack_pixi_env: environment.tar  ## pack Python environment to be deployed on your Upkie
-
-unpack_pixi_env: $(CURDIR)/activate.sh  ### unpack Python environment
 
 run_agent:  ### run agent
 	@if [ -f $(CURDIR)/activate.sh ]; then \

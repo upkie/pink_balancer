@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# SPDX-License-Identifier: Apache-2.0
 
 DOWNLOAD_URL="https://github.com/upkie/upkie/releases/download"
 VERSION=8.0.0
