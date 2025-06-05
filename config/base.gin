@@ -31,6 +31,7 @@ SagittalBalancer.max_ground_accel = 10.0             # [m] / [s]²
 SagittalBalancer.max_ground_velocity = 3.0           # [m] / [s]
 
 WheelController.balancer_class = "MPCBalancer"
+WheelController.left_wheeled = True
 WheelController.turning_deadband = 0.3
 WheelController.turning_decision_time = 0.2          # [s]
 WheelController.wheel_radius = 0.06                  # [m]
