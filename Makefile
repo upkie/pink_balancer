@@ -44,7 +44,7 @@ pack_pixi_env:  ## pack Python environment to be deployed on your Upkie
 unpack_pixi_env:  ### unpack Python environment
 	@pixi-pack unpack environment.tar || { \
 		echo "Error: pixi-pack not found"; \
-		echo "You can download `pixi-pack-aarch64-unknown-linux-gnu` from https://github.com/Quantco/pixi-pack/releases"; \
+		echo "You can download `pixi-pack-aarch64-unknown-linux-musl` from https://github.com/Quantco/pixi-pack/releases"; \
 		exit 1; \
 	}
 
